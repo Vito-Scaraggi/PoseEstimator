@@ -1,0 +1,10 @@
+version: '3'
+services:
+  hrnet:
+    build : "./HRNet-Human-Pose-Estimation"
+    image: hrnet:1.0
+    container_name: hrnet
+    volumes:
+      - "./HRNet-Human-Pose-Estimation:/HRNet-Human-Pose-Estimation"
+    ports:
+      - "8080:8080"
