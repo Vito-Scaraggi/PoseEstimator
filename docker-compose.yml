@@ -8,3 +8,19 @@ services:
       - "./HRNet-Human-Pose-Estimation:/HRNet-Human-Pose-Estimation"
     ports:
       - "8080:8080"
+  
+  postgres:
+    container_name: postgres
+    image: "postgres:13"
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=pgdb
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./db/dump.sql:/docker-entrypoint-initdb.d/dump.sql
+  
+volumes:
+  pg_data: {}
