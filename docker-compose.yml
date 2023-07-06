@@ -39,3 +39,20 @@ services:
       - API_PORT=3001
     volumes:
       - "./publisher:/publisher"
+      - "8080:8080"
+  
+  postgres:
+    container_name: postgres
+    image: "postgres:13"
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=pgdb
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./server/db/dump.sql:/docker-entrypoint-initdb.d/dump.sql
+  
+volumes:
+  pg_data: {}
