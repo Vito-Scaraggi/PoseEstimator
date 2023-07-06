@@ -13,29 +13,44 @@ api = Flask(__name__)
 
 @api.post("/model/<string:model>/inference/<string:dataset>")
 def inference(model, dataset):
-    bboxes = request.json["bboxes"]
-    task = celery.send_task("tasks.inference", (model, dataset, bboxes))
-    id = task.id
-    status = celery.AsyncResult(id, app = celery).state
-    return {
-        "id" : id,
-        "status" : status
-    }
+    ret = {}
+    try:
+        kwargs = {
+            "model" : model,
+            "dataset" : dataset,
+            "bboxes" : request.json.get("bboxes"),
+            "img_format" : request.json.get("img_format") or 'png',
+            "billed" : request.json.get("billed") or False
+        }
+
+        task = celery.send_task("tasks.inference", kwargs = kwargs)
+        
+        ret["id"] = task.id
+        ret["status"] = celery.AsyncResult(task.id, app = celery).state
+    except Exception as err:
+        ret["error"] = str(err)
+    finally:
+        return  ret
 
 @api.get("/status/<string:id>")
 def status(id):
-    status = celery.AsyncResult(id, app = celery).state
-    #add custom states or convert   
-    ret = {
-        "id" : id,
-        "status" : status
-    }
-    
-    if status == states.SUCCESS:
-        result = celery.AsyncResult(id, app = celery).result
-        ret["result"] = result
-    
-    return ret
+    ret = {'id' : id}
+    try:
+        status = celery.AsyncResult(id, app = celery).state
+        status = "COMPLETED" if status == "SUCCESS" else status
+        ret["status"] = status
+
+        if status == 'COMPLETED':
+            ret["result"] = celery.AsyncResult(id, app = celery).result
+
+        if status == 'FAILED':
+            ret["error"] = celery.AsyncResult(id, app = celery).info.get("exc_type")
+            #ret["message"] = celery.AsyncResult(id, app = celery).info.get("exc_message")
+
+    except Exception as err:
+        ret["error"] = str(err)
+    finally:
+        return ret
 
 if __name__ == "__main__":
     API_PORT = os.environ.get("API_PORT") or 3001
