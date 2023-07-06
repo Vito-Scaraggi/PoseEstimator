@@ -9,5 +9,10 @@
     "up": "tsc && node dist/index.js"
   },
   "author": "Luca Guidi & Vito Scaraggi",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "pg": "^8.11.1",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.32.1"
+  }
 }

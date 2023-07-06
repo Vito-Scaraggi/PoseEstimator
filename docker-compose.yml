@@ -20,7 +20,7 @@ services:
       - POSTGRES_DB=pgdb
     volumes:
       - pg_data:/var/lib/postgresql/data
-      - ./db/dump.sql:/docker-entrypoint-initdb.d/dump.sql
+      - ./server/db/dump.sql:/docker-entrypoint-initdb.d/dump.sql
   
 volumes:
   pg_data: {}
