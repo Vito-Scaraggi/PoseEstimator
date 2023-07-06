@@ -9,7 +9,8 @@ const sequelize = new Sequelize(
     {
         host: process.env.DB_HOST, // Host del database
         dialect: "postgres",       // Utilizzo del dialetto PostgreSQL
-    }
+    }  
+    
 )
 
 export default sequelize // Esportazione dell'istanza di Sequelize per l'uso in altri moduli

@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS public."user"
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
     name text COLLATE pg_catalog."default" NOT NULL,
     surname text COLLATE pg_catalog."default" NOT NULL,
-    email text COLLATE pg_catalog."default" NOT NULL,
+    email text COLLATE pg_catalog."default" NOT NULL UNIQUE,
     password text COLLATE pg_catalog."default" NOT NULL,
     credit real NOT NULL DEFAULT 0,
     admin boolean NOT NULL DEFAULT false,
@@ -26,7 +26,7 @@ ALTER TABLE IF EXISTS public."user"
 CREATE TABLE IF NOT EXISTS public.dataset
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    name text COLLATE pg_catalog."default" NOT NULL,
+    name text COLLATE pg_catalog."default" NOT NULL UNIQUE,
     tags text[] COLLATE pg_catalog."default",
     "userID" integer NOT NULL,
     CONSTRAINT dataset_pkey PRIMARY KEY (id),
@@ -71,7 +71,7 @@ ALTER TABLE IF EXISTS public.image
 CREATE TABLE IF NOT EXISTS public.model
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    name text COLLATE pg_catalog."default" NOT NULL,
+    name text COLLATE pg_catalog."default" NOT NULL UNIQUE,
     CONSTRAINT model_pkey PRIMARY KEY (id)
 )
 
