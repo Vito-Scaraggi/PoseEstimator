@@ -6,5 +6,36 @@ services:
     container_name: hrnet
     volumes:
       - "./HRNet-Human-Pose-Estimation:/HRNet-Human-Pose-Estimation"
+    depends_on:
+      - rabbitmq
+    environment:
+      - RMQ_PORT=5672
+
+  rabbitmq:
+    image: rabbitmq:3.9.29
+    container_name: rabbitmq
+    environment:
+      - PORT=5672
+  server:
+    image: node_server:1.0
+    container_name: node_server
+    build : "./server"
+    volumes : 
+      - "./server:/server"
     ports:
-      - "8080:8080"
+      - "5000:5000"
+    depends_on:
+      - hrnet
+  
+  publisher:
+    build: "./publisher"
+    image: publisher:1.0
+    container_name : publisher
+    depends_on:
+      - rabbitmq
+      - hrnet
+    environment:
+      - RMQ_PORT=5672
+      - API_PORT=3001
+    volumes:
+      - "./publisher:/publisher"

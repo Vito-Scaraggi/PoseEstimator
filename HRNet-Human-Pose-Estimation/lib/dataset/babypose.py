@@ -285,9 +285,10 @@ class BabyPoseDataset(JointsDataset):
             except Exception:
                 logger.error('Fail to make {}'.format(res_folder))
 
+        inf_id = os.path.basename(cfg.TEST.COCO_BBOX_FILE).split(".")[0].replace("results_", "")
         res_file = os.path.join(
             res_folder, 'keypoints_{}_results_{}.json'.format(
-                self.image_set, rank)
+                self.image_set, inf_id)
         )
 
         # person x (keypoints)

@@ -1,10 +1,9 @@
 import json
 import os
-import subprocess
 
-def get_results():
+def get_results(inf_id, model_name, dataset_name):
 
-    in_path = "output/babypose/multi_out_pose_hrnet/2_stage_coco_lr_7-5e-4/results/keypoints_test_results_0.json"
+    in_path = f"output/babypose/{model_name}/base/results/keypoints_{dataset_name}_results_{inf_id}.json"
     joints = [  "right_hand",
                 "right_elbow",
                 "right_shoulder",
@@ -24,39 +23,30 @@ def get_results():
         for elem in results:
             ret.append( {
                 "image_id" : elem["image_id"],
-                "keypoints" : [ { "x" : int(x) , "y" : int(y) } 
-                                for x,y in 
-                                zip(elem["keypoints"][0::3], elem["keypoints"][1::3]) ],
+                "keypoints" : [ { "joint" : j, "x" : x , "y" : y } 
+                                for j,x,y in 
+                                zip(joints, elem["keypoints"][0::3], elem["keypoints"][1::3]) ],
                 "score" : elem["score"] 
             }
             )
-    print(ret)
-    #return ret
+    return ret
 
-def write_bbox(inf_id, img_ids, bboxes):
+def write_bbox(inf_id, bboxes):
+    default_bbox = [220, 65, 200, 350]
+
     out_path = "data/babypose/person_detection_results"
     filename = f"results_{inf_id}.json"
     filepath = os.path.join(out_path, filename)
     
-    with open(filepath, "w") as f:
-        ret = []
-        for id, bbox in zip(img_ids, bboxes):
-            ret.append({
-                "image_id" : id,
-                "bbox" : bbox,
+    ret = []
+    
+    for elem in bboxes:
+        ret.append({
+                "image_id" : elem.get("image_id"),
+                "bbox" : elem.get("bbox") or default_bbox,
                 "category_id" : 3,
                 "score" : 1
-            })
-        json.dump(ret, f)
+        })
 
-'''
-if __name__ == "__main__":
-    inf_id = 1
-    img_ids = [12474, 12361]
-    bboxes = [[251, 34, 208, 373], [204, 129, 195, 299]]
-    write_bbox(inf_id, img_ids, bboxes)
-    command = f"""python tools/test.py --cfg experiments/babypose/hrnet/2_stage_coco_lr_7-5e-4.yaml TEST.COCO_BBOX_FILE data/babypose/person_detection_results/results_{inf_id}.json"""
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-    process.wait()
-    get_results()
-'''
+    with open(filepath, "w") as f:
+        json.dump(ret, f)
