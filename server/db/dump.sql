@@ -9,8 +9,10 @@ CREATE TABLE IF NOT EXISTS public."user"
     surname text COLLATE pg_catalog."default" NOT NULL,
     email text COLLATE pg_catalog."default" NOT NULL UNIQUE,
     password text COLLATE pg_catalog."default" NOT NULL,
-    credit real NOT NULL DEFAULT 0,
+    credit real NOT NULL DEFAULT 500,
     admin boolean NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP DEFAULT NULL,
+    "updatedAt" TIMESTAMP DEFAULT NULL,
     CONSTRAINT user_pkey PRIMARY KEY (id)
 )
 
@@ -28,7 +30,10 @@ CREATE TABLE IF NOT EXISTS public.dataset
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
     name text COLLATE pg_catalog."default" NOT NULL UNIQUE,
     tags text[] COLLATE pg_catalog."default",
+    format text COLLATE pg_catalog."default" DEFAULT 'png',
     "userID" integer NOT NULL,
+    "createdAt" TIMESTAMP DEFAULT NULL,
+    "updatedAt" TIMESTAMP DEFAULT NULL,
     CONSTRAINT dataset_pkey PRIMARY KEY (id),
     CONSTRAINT user_id FOREIGN KEY ("userID")
         REFERENCES public."user" (id) MATCH SIMPLE
@@ -52,6 +57,8 @@ CREATE TABLE IF NOT EXISTS public.image
     name text COLLATE pg_catalog."default" NOT NULL,
     bbox integer[] NOT NULL,
     "datasetID" integer NOT NULL,
+    "createdAt" TIMESTAMP DEFAULT NULL,
+    "updatedAt" TIMESTAMP DEFAULT NULL,
     CONSTRAINT image_pkey PRIMARY KEY (uuid),
     CONSTRAINT dataset_id FOREIGN KEY ("datasetID")
         REFERENCES public.dataset (id) MATCH SIMPLE
@@ -72,6 +79,8 @@ CREATE TABLE IF NOT EXISTS public.model
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
     name text COLLATE pg_catalog."default" NOT NULL UNIQUE,
+    "createdAt" TIMESTAMP DEFAULT NULL,
+    "updatedAt" TIMESTAMP DEFAULT NULL,
     CONSTRAINT model_pkey PRIMARY KEY (id)
 )
 

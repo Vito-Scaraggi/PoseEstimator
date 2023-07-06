@@ -28,7 +28,7 @@ const User = sequelize.define("user", {
     credit: {
         type: Sequelize.FLOAT,
         allowNull: false,
-        defaultValue: 0 //process.env.CREDITS || 5000
+        defaultValue: process.env.DEFAULT_CREDITS || 500
     },
     admin: {
         type: Sequelize.BOOLEAN,
