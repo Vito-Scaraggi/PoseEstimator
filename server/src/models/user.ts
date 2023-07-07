@@ -25,6 +25,10 @@ const User = sequelize.define("user", {
         type: Sequelize.TEXT,
         allowNull: false,
     },
+    salt : {
+        type: Sequelize.TEXT,
+        allowNull: false,
+    },
     credit: {
         type: Sequelize.FLOAT,
         allowNull: false,
