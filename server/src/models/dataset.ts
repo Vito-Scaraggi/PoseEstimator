@@ -19,10 +19,14 @@ const Dataset = sequelize.define("dataset", {
         allowNull: false,
         defaultValue: 0
     },
+    format: {
+        type: Sequelize.TEXT,
+        defaultValue: 'png'
+    },
     userID: {
         type: Sequelize.INTEGER,
         allowNull: false,
-    },
+    }
 },{
     freezeTableName: true 
 });
