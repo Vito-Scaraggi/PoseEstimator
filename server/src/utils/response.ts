@@ -18,6 +18,8 @@ class ResponseFactory{
 		"JsonWebTokenError" : StatusCodes.UNAUTHORIZED,
 		"TokenExpiredError" : StatusCodes.UNAUTHORIZED,
 		"NotBeforeError" : StatusCodes.UNAUTHORIZED,
+		"DatasetNotFound": StatusCodes.BAD_REQUEST,
+		"DatasetNotValid": StatusCodes.BAD_REQUEST
 	}
 
 	static getErrResponse(err : Error) : Response{
