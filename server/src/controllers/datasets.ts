@@ -1,9 +1,12 @@
 import Dataset from "../models/dataset";
-import { Request, Response, NextFunction, response } from 'express'
+import { Request, Response, NextFunction, response, request } from 'express'
 import { StatusCodes } from "http-status-codes";
 import { z } from 'zod'
-import { DatasetNotFound, DatasetNotValid } from "../utils/exceptions";
+import { DatasetNotFound, DatasetNotValid, FileNotFoundError, InvalidFile } from "../utils/exceptions";
 import { where, Op } from "sequelize";
+import multer from 'multer';
+
+
 
 const createDatasetSchema = z.object({
     name: z.string().min(1).max(25),
@@ -17,8 +20,9 @@ const updateDatasetSchema = z.object({
     format: z.string().min(2).max(4).optional()
 });
 
-class DatasetsController{
+const upload = multer({dest: '../../uploads/'})
 
+class DatasetsController{
     
     static async getById(req : Request, res : Response, next: NextFunction): Promise<void>{
         try{
@@ -37,7 +41,7 @@ class DatasetsController{
     static async getAll(req : Request, res : Response, next: NextFunction){
         try{
             const datasets =  await Dataset.findAll({
-                where : { userID : 1}
+                where : { userID : req.params.userID}
             })
 
             if(datasets){
@@ -60,7 +64,7 @@ class DatasetsController{
                     name: value.data.name,
                     tags: value.data.tags || [],
                     format: value.data.format,
-                    userID: 1 //VA MODIFICATO
+                    userID: req.params.userID
                 });
         
                 return res.status(StatusCodes.CREATED).json(DATASET);
@@ -87,11 +91,11 @@ class DatasetsController{
         }
     }
 
-    static async update(req : Request, res : Response, next: NextFunction){
+    static async updateById(req : Request, res : Response, next: NextFunction){
         try{
             const dat = await Dataset.findOne({
                 where : { 
-                    [Op.and]: [{ userID : 1 }, { 'id': req.params.id }] }
+                    [Op.and]: [{ userID : req.params.userID }, { 'id': req.params.id }] }
             })
 
             if(dat){
@@ -100,7 +104,7 @@ class DatasetsController{
                 if(value.success){
                     const sameNameDat = await Dataset.findOne({
                         where : { 
-                            [Op.and]: [{ userID : 1 }, { 'name': value.data.name }] }
+                            [Op.and]: [{ userID : req.params.userID }, { 'name': value.data.name }] }
                     })
 
                     if(!sameNameDat){
@@ -109,7 +113,7 @@ class DatasetsController{
                             tags: value.data.tags || [],
                             format: value.data.format,
                         });
-                        
+
                         return res.status(StatusCodes.CREATED).json(dat);
                     }else{
                         throw new DatasetNotValid();
@@ -126,6 +130,32 @@ class DatasetsController{
             return next(error);
         }
     }
+
+    static async insertImg(req : Request, res : Response, next: NextFunction){
+        try{
+            upload.array('image')(request,response, async (err : any) => {
+
+                if(err instanceof multer.MulterError){
+                    throw new InvalidFile();
+                }else if(err){
+                    throw new Error('Something went wrong in the upload of the file');
+                }
+                console.warn("EEEEEEEEE " + req.file )
+                if(req.file){
+                    //Scalare i crediti dell'utente
+                    return res.status(StatusCodes.CREATED).json(req.file);
+                }else{
+                    throw new FileNotFoundError();
+                }
+
+
+            })
+
+        }catch(er){
+            next(er)
+        }
+    }
+
 }
 
 export default DatasetsController;

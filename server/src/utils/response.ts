@@ -19,7 +19,9 @@ class ResponseFactory{
 		"TokenExpiredError" : StatusCodes.UNAUTHORIZED,
 		"NotBeforeError" : StatusCodes.UNAUTHORIZED,
 		"DatasetNotFound": StatusCodes.BAD_REQUEST,
-		"DatasetNotValid": StatusCodes.BAD_REQUEST
+		"DatasetNotValid": StatusCodes.BAD_REQUEST,
+		"InvalidFile": StatusCodes.BAD_REQUEST,
+		"FileNotFoundError": StatusCodes.BAD_REQUEST,
 	}
 
 	static getErrResponse(err : Error) : Response{

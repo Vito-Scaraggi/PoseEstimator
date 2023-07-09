@@ -11,7 +11,19 @@ export class DatasetNotFound extends Error{
 }
 
 export class DatasetNotValid extends Error{
-	constructor(message = "Dataset inserted is not valid"){
+	constructor(message = "Dataset is not valid"){
+		super(message);
+	}
+}
+
+export class InvalidFile extends Error{
+	constructor(message = "File is not valid"){
+		super(message);
+	}
+}
+
+export class FileNotFoundError extends Error{
+	constructor(message = "File not found"){
 		super(message);
 	}
 }
