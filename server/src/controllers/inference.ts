@@ -55,7 +55,8 @@ class InferenceController {
                     ));
                 }
                 
-                await SingletonProxy.getInstance().inference(modelName, req.params.datasetName, data)
+                const datasetName = req.params.jwtUserId + req.params.datasetName
+                await SingletonProxy.getInstance().inference(modelName, datasetName, data)
                 .then( (data) => successHandler(res, data) )
                 .catch( ( err) => next(err) );
             }

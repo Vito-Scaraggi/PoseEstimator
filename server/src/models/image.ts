@@ -4,7 +4,7 @@ import sequelize from "../utils/database"
 // Definizione del modello Dataset
 const Image = sequelize.define("image", {
     uuid: {
-        type: Sequelize.TEXT,
+        type: Sequelize.UUID,
         primaryKey: true,
         allowNull: false,
     },

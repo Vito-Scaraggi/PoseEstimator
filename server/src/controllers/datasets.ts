@@ -9,8 +9,6 @@ import { successHandler } from "../utils/response";
 
 import User from "../models/user";
 
-
-
 const createDatasetSchema = z.object({
     name: z.string().min(1).max(25),
     tags: z.array(z.string()).optional(),
@@ -151,6 +149,7 @@ class DatasetsController{
                 }
             })
 
+            // controllare uniformita estensione immmagine-dataset
         }catch(er){
             next(er)
         }

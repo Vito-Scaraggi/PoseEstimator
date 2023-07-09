@@ -55,13 +55,13 @@ ALTER TABLE IF EXISTS public.dataset
 
 CREATE TABLE IF NOT EXISTS public.image
 (
-    uuid text COLLATE pg_catalog."default" NOT NULL,
+    "uuid" UUID NOT NULL DEFAULT gen_random_uuid(),
     file_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
     bbox integer[] NOT NULL DEFAULT '{220, 65, 200, 350}',
     "datasetID" integer NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NULL,
     "updatedAt" TIMESTAMP DEFAULT NULL,
-    CONSTRAINT image_pkey PRIMARY KEY (uuid),
+    CONSTRAINT image_pkey PRIMARY KEY ("uuid"),
     CONSTRAINT dataset_id FOREIGN KEY ("datasetID")
         REFERENCES public.dataset (id) MATCH SIMPLE
         ON UPDATE NO ACTION
