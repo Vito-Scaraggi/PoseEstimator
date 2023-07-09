@@ -45,3 +45,9 @@ export class ModelNotFound extends Error{
 		super(message);
 	}
 }
+
+export class DatasetNotValid extends Error{
+	constructor(message = "Dataset inserted is not valid"){
+		super(message);
+	}
+}

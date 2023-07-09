@@ -23,6 +23,7 @@
     "@types/jsonwebtoken": "^9.0.2",
     "@types/node": "^20.3.3",
     "axios": "^1.4.0",
+    "jsonwebtoken": "^9.0.1",
     "pg": "^8.11.1",
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.32.1",

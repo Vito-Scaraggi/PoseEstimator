@@ -50,6 +50,9 @@ class ResponseFactory{
 			case "ZodError":
 				ret = new Response(StatusCodes.BAD_REQUEST, "bad request");
 			break;
+			case "DatasetNotValid":
+				ret = new Response(StatusCodes.BAD_REQUEST, err.message);
+			break;
 			case "DatasetNotFound":
 				ret = new Response(StatusCodes.NOT_FOUND, err.message);
 			break;
