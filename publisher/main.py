@@ -3,6 +3,7 @@
 from flask import Flask, request
 from celery import Celery, states
 import os
+import traceback
 
 PORT = os.environ.get("PORT") or 5672
 RMQ_USER = os.environ.get("RMQ_USER") or "guest"

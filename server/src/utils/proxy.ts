@@ -1,15 +1,10 @@
 import axios from 'axios'
 
-type inferenceData = {
-    bboxes : {"image_id" : number, "bbox" : number[] } [],
-    billed? : boolean,
-    img_format? : string
-}
-
 class SingletonProxy {
     
     private base_url : string;
     private jobs_cache : { [key:string] : any };
+
     private static instance : SingletonProxy;
     private static FINAL_STATES = ["FAILED", "ABORTED", "COMPLETED"];
 
@@ -18,7 +13,7 @@ class SingletonProxy {
         this.jobs_cache = {};
     }
 
-    async inference(model : string, dataset : string, data : inferenceData) {
+    async inference(model : string, dataset : string, data : { [key:string] : any }) {
         let req_body = data;
         return await axios.post( this.base_url + "/model/" + model + '/inference/' + dataset, req_body)
                 .then( (data) => {

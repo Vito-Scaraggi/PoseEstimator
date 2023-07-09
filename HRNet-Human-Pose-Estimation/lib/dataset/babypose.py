@@ -59,6 +59,12 @@ class BabyPoseDataset(JointsDataset):
         self.aspect_ratio = self.image_width * 1.0 / self.image_height
         self.pixel_std = 200
 
+        cats = ['infant']
+        self.classes = ['__background__'] + cats
+        self.num_classes = len(self.classes)
+        self._class_to_ind = dict(zip(self.classes, range(self.num_classes)))
+        self._class_to_coco_ind = dict(zip(cats, [3]))
+        '''
         self.coco = COCO(self._get_ann_file_keypoint())
 
         # deal with class names
@@ -75,12 +81,13 @@ class BabyPoseDataset(JointsDataset):
                 for cls in self.classes[1:]
             ]
         )
-
+        
         # load image file names
         self.image_set_index = self._load_image_set_index()
         self.num_images = len(self.image_set_index)
         logger.info('=> num_images: {}'.format(self.num_images))
-
+        '''
+        
         self.num_joints = 12
         self.flip_pairs = [[0, 5], [1, 4], [2, 3], [6, 11],
                            [7, 10], [8, 9]]
@@ -346,11 +353,12 @@ class BabyPoseDataset(JointsDataset):
 
         self._write_coco_keypoint_results(
             oks_nmsed_kpts, res_file)
+        
         #if 'test' not in self.image_set:
-        info_str = self._do_python_keypoint_eval(
-            res_file, res_folder)
-        name_value = OrderedDict(info_str)
-        return name_value, name_value['AP']
+        #info_str = self._do_python_keypoint_eval(
+        #    res_file, res_folder)
+        #name_value = OrderedDict(info_str)
+        #return name_value, name_value['AP']
         #else:
         #    return {'Null': 0}, 0
 

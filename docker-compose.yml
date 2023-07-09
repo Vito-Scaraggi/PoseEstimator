@@ -22,6 +22,7 @@ services:
     build : "./server"
     volumes : 
       - "./server:/server"
+      - "../HRNet-Human-Pose-Estimation/data/babypose/images:/img"
     ports:
       - "5000:5000"
     depends_on:
@@ -34,7 +35,8 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=pgdb
       - DB_HOST=postgres
-      - DEFAULT_CREDITS=500
+      - INF_COST=5
+      - IMG_COST=0.1
   
   publisher:
     build: "./publisher"
