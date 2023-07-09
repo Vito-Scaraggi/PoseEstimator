@@ -13,11 +13,6 @@ const Image = sequelize.define("image", {
         autoIncrement: true,
         allowNull: false,
     },
-    name: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-        unique: true,
-    },
     bbox: {
         type: Sequelize.ARRAY(Sequelize.INTEGER),
         allowNull: false,

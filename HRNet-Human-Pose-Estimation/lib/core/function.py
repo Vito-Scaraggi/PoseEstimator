@@ -324,16 +324,18 @@ def validate(config, val_loader, val_dataset, model, criterion, criterion_kld,  
         perf_indicators = [0]*num_outputs
         prefix = '{}_ep{}'.format(os.path.join(output_dir, 'val'), epoch)
         
+        
         writer = writer_dict['writer']
         global_steps = writer_dict['valid_global_steps']
         
         for index in range(num_outputs):
             
-            name_values, perf_indicators[index] = val_dataset.evaluate(
+            #name_values, perf_indicators[index] = 
+            val_dataset.evaluate(
                 config, all_preds[index], output_dir, all_boxes, image_path,
                 filenames, imgnums
             )
-
+            '''
             print(roles[index], "\n")
 
             if isinstance(name_values, list):
@@ -356,8 +358,9 @@ def validate(config, val_loader, val_dataset, model, criterion, criterion_kld,  
         writer.add_scalar('valid_loss_soft', losses_soft.val, global_steps)
         writer.add_scalar('valid_loss_teacher', losses_teacher.val, global_steps)
         writer_dict['valid_global_steps'] += 1
-
+        
         return perf_indicators
+        '''
 
 
 # markdown format output

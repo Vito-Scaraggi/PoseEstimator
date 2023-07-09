@@ -2,7 +2,7 @@ import Sequelize from "sequelize"
 import sequelize from "../utils/database"
 
 // Definizione del modello Model
-const Model = sequelize.define("models", {
+const Model = sequelize.define("model", {
     id: {
         type: Sequelize.INTEGER,
         primaryKey: true,

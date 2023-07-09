@@ -5,11 +5,11 @@ import MWBuilder from '../middlewares/middleware';
 const DatasetsRouter = express.Router()
 
 DatasetsRouter
-            .get("/dataset/all",  new MWBuilder().addAuth().addCustom( DatasetsController.getAll).buildWithErr() )
-            .get("/dataset/:id",new MWBuilder().addAuth().addCustom( DatasetsController.getById).buildWithErr())
-            .post("/dataset", new MWBuilder().addAuth().addCustom( DatasetsController.create).buildWithErr())
-            .delete("/dataset/:id", new MWBuilder().addAuth().addCustom( DatasetsController.delete).buildWithErr())
-            .put("/dataset/:id", new MWBuilder().addAuth().addCustom( DatasetsController.updateById).buildWithErr())
-            .post("/dataset/:id/img", new MWBuilder().addAuth().addCustom( DatasetsController.insertImg).buildWithErr())
+            .get("/dataset/all",  new MWBuilder().addAuth().addCustom( DatasetsController.getAll).build() )
+            .get("/dataset/:datasetId",new MWBuilder().addAuth().addDatasetOwnership().addCustom( DatasetsController.getById).build())
+            .post("/dataset", new MWBuilder().addAuth().addCustom( DatasetsController.create).build())
+            .delete("/dataset/:datasetId", new MWBuilder().addAuth().addDatasetOwnership().addCustom( DatasetsController.delete).build())
+            .put("/dataset/:datasetId", new MWBuilder().addAuth().addDatasetOwnership().addCustom( DatasetsController.updateById).build())
+            .post("/dataset/:datasetId/img", new MWBuilder().addAuth().addDatasetOwnership().addCustom( DatasetsController.insertImg).build())
 
 export default DatasetsRouter;

@@ -4,18 +4,18 @@ import os
 def get_results(inf_id, model_name, dataset_name):
 
     in_path = f"output/babypose/{model_name}/base/results/keypoints_{dataset_name}_results_{inf_id}.json"
-    joints = [  "right_hand",
-                "right_elbow",
-                "right_shoulder",
-                "left_shoulder ",
-                "left_elbow",
-                "left_hand",
-                "right_foot",
-                "right_knee",
-                "right_hip",
-                "left_hip",
-                "left_knee",
-                "left_foot"
+    joints = [  "right hand",
+                "right elbow",
+                "right shoulder",
+                "left shoulder",
+                "left elbow",
+                "left hand",
+                "right foot",
+                "right knee",
+                "right hip",
+                "left hip",
+                "left knee",
+                "left foot"
             ]
     ret = []
     with open(in_path, "r") as f:
@@ -23,10 +23,10 @@ def get_results(inf_id, model_name, dataset_name):
         for elem in results:
             ret.append( {
                 "image_id" : elem["image_id"],
-                "keypoints" : [ { "joint" : j, "x" : x , "y" : y } 
-                                for j,x,y in 
+                "keypoints" : [ { "type" : t, "x" : int(x) , "y" : int(y) } 
+                                for t,x,y in 
                                 zip(joints, elem["keypoints"][0::3], elem["keypoints"][1::3]) ],
-                "score" : elem["score"] 
+                "score" : round(elem["score"]*100,2) 
             }
             )
     return ret

@@ -5,6 +5,9 @@ import { z } from 'zod'
 import { DatasetNotFound, DatasetNotValid, FileNotFoundError, InvalidFile } from "../utils/exceptions";
 import { where, Op } from "sequelize";
 import multer from 'multer';
+import { successHandler } from "../utils/response";
+
+import User from "../models/user";
 
 
 
@@ -20,18 +23,18 @@ const updateDatasetSchema = z.object({
     format: z.string().min(2).max(4).optional()
 });
 
-const upload = multer({dest: '../../uploads/'})
+const upload = multer({dest: './uploads/'})
 
 class DatasetsController{
+
+    private static imgCost : number = Number(process.env.IMG_COST) || 0.1;
     
     static async getById(req : Request, res : Response, next: NextFunction): Promise<void>{
         try{
-            const dat = await Dataset.findByPk(req.params.id)
-            if(dat){
-                res.send(dat);
-            }else{
-                throw new DatasetNotFound();
-            }
+            const dat = await Dataset.findByPk(req.params.datasetId)
+
+            successHandler(res, dat);
+
         }catch(error){
             next(error)
         }
@@ -41,11 +44,11 @@ class DatasetsController{
     static async getAll(req : Request, res : Response, next: NextFunction){
         try{
             const datasets =  await Dataset.findAll({
-                where : { userID : req.params.userID}
+                where : { userID : req.params.jwtUserId}
             })
 
             if(datasets){
-                res.send(datasets);
+                successHandler(res, datasets);
             }else{
                 throw new DatasetNotFound();
             }
@@ -64,10 +67,9 @@ class DatasetsController{
                     name: value.data.name,
                     tags: value.data.tags || [],
                     format: value.data.format,
-                    userID: req.params.userID
+                    userID: req.params.jwtUserId
                 });
-        
-                return res.status(StatusCodes.CREATED).json(DATASET);
+                successHandler(res, DATASET,StatusCodes.CREATED);
             }else{
                 throw new DatasetNotValid();
             }
@@ -78,14 +80,11 @@ class DatasetsController{
 
     static async delete(req : Request, res : Response, next: NextFunction){
         try{
-            const datasetToDelete =  await Dataset.findByPk(req.params.id);
+            const datasetToDelete =  await Dataset.findByPk(req.params.jwtUserId);
 
-            if(datasetToDelete){
-                datasetToDelete.destroy()
-                res.status(StatusCodes.OK).json(datasetToDelete);
-            }else{
-                throw new DatasetNotFound();
-            }
+            datasetToDelete?.destroy()
+            successHandler(res, datasetToDelete);
+            
         }catch(error){
             return next(error);
         }
@@ -93,38 +92,30 @@ class DatasetsController{
 
     static async updateById(req : Request, res : Response, next: NextFunction){
         try{
-            const dat = await Dataset.findOne({
-                where : { 
-                    [Op.and]: [{ userID : req.params.userID }, { 'id': req.params.id }] }
-            })
 
-            if(dat){
-                const value = updateDatasetSchema.safeParse(req.body);
+            const dat = await Dataset.findByPk(req.params.datasetId)
+            const value = updateDatasetSchema.safeParse(req.body);
 
-                if(value.success){
-                    const sameNameDat = await Dataset.findOne({
-                        where : { 
-                            [Op.and]: [{ userID : req.params.userID }, { 'name': value.data.name }] }
-                    })
+            if(value.success){
+                const sameNameDat = await Dataset.findOne({
+                    where : { 
+                        [Op.and]: [{ userID : req.params.jwtUserId }, { 'name': value.data.name }] }
+                })
 
-                    if(!sameNameDat){
-                        dat.update({
-                            name: value.data.name,
-                            tags: value.data.tags || [],
-                            format: value.data.format,
-                        });
+                if(!sameNameDat){
+                    dat?.update({
+                        name: value.data.name,
+                        tags: value.data.tags || [],
+                        format: value.data.format,
+                    });
 
-                        return res.status(StatusCodes.CREATED).json(dat);
-                    }else{
-                        throw new DatasetNotValid();
-                    }
-                   
-                } else {
-                    throw new DatasetNotValid();     
+                    successHandler(res, dat, StatusCodes.CREATED);
+                }else{
+                    throw new DatasetNotValid();
                 }
-            }else{
-                throw new DatasetNotFound();
-            }  
+            } else {
+                throw new DatasetNotValid();     
+            }
         
         }catch(error){
             return next(error);
@@ -133,22 +124,31 @@ class DatasetsController{
 
     static async insertImg(req : Request, res : Response, next: NextFunction){
         try{
-            upload.array('image')(request,response, async (err : any) => {
+            const ownedCredits = Number(req.params.credit).valueOf();
+
+            upload.array('image')(request, response, async (err : any) => {
 
                 if(err instanceof multer.MulterError){
                     throw new InvalidFile();
                 }else if(err){
                     throw new Error('Something went wrong in the upload of the file');
                 }
-                console.warn("EEEEEEEEE " + req.file )
-                if(req.file){
+                console.warn("EEEEEEEEE " + request.file )
+                if(request.file){
                     //Scalare i crediti dell'utente
-                    return res.status(StatusCodes.CREATED).json(req.file);
+                    if (ownedCredits >= DatasetsController.imgCost){
+                    
+                        const user = await User.findOne({
+                            where : {id : req.params.jwtUserId}
+                        });    
+                        user?.decrement({ credit : DatasetsController.imgCost});
+                        await user?.save();
+                    }
+
+                    successHandler(res, request.file, StatusCodes.CREATED);
                 }else{
                     throw new FileNotFoundError();
                 }
-
-
             })
 
         }catch(er){

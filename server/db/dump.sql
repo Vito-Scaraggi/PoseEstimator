@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS public."user"
     email text COLLATE pg_catalog."default" NOT NULL UNIQUE,
     password text COLLATE pg_catalog."default" NOT NULL,
     "salt" text COLLATE pg_catalog."default" NOT NULL,
-    credit real NOT NULL DEFAULT 500,
+    credit real NOT NULL DEFAULT 100,
     admin boolean NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP DEFAULT NULL,
     "updatedAt" TIMESTAMP DEFAULT NULL,
@@ -51,12 +51,13 @@ ALTER TABLE IF EXISTS public.dataset
 
 -- DROP TABLE IF EXISTS public.image;
 
+-- deleted name field
+
 CREATE TABLE IF NOT EXISTS public.image
 (
     uuid text COLLATE pg_catalog."default" NOT NULL,
     file_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    name text COLLATE pg_catalog."default" NOT NULL,
-    bbox integer[] NOT NULL,
+    bbox integer[] NOT NULL DEFAULT '{220, 65, 200, 350}',
     "datasetID" integer NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NULL,
     "updatedAt" TIMESTAMP DEFAULT NULL,
@@ -105,3 +106,6 @@ INSERT INTO public."user"(
 	VALUES ('Vito', 'Scaraggi','vito@vito.it', 'e220164f41888d58f385856cb6a245ff427544b65d00eb67360ad33f8b445506', '1e887b0f56852632c97454e2d0b47165' , 100, false),
             ('Luca', 'Guidi','luca@luca.it', 'e4f8e1ce02cb28c62bf24b5eda40b39258d760be8b2767b7d50a3963394c4820', '392b6ae66271cdd01349316e979a3891' , 100, false),
 			('Admin', 'Admin', 'admin@admin.it','152a6186c987f8a9cfa8402034dd3b53b9466d9861a713818df3728da10865e9','da91f972543a640ec5ed1df52c176e6f', 200, true);
+
+INSERT INTO public."model"(
+    name) VALUES ('multi_out_pose_hrnet');

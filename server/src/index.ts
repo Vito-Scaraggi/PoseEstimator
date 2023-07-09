@@ -7,7 +7,7 @@ import UsersRouter from './routes/users';
 import InferenceRouter from './routes/inference';
 
 const app = express();
-async () => ( await sequelize.sync({ alter : true}));
+async () => ( await sequelize.sync({ alter : true, force : true}));
 
 app.use(bodyParser.json());
 app.use(UsersRouter);
