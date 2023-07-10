@@ -39,17 +39,18 @@ class Middleware{
     static async checkDatasetOwner ( req : Request, res : Response, next : NextFunction ) {
         try{
 
-            const schema = z.coerce.number().int();
+            const schema = z.coerce.number({ invalid_type_error : "dataset id must be a number"})
+                            .int({ message : "dataset id must be a integer"});
             schema.parse(req.params.datasetId);
 
             const dataset = await Dataset
                                 .findOne( { where : { id : req.params.datasetId}});
             
             if (dataset){
-                let datasetOwner = dataset?.getDataValue("userID");
+                let datasetOwner = dataset.getDataValue("userID");
                 
                 if (datasetOwner === req.params.jwtUserId){
-                    req.params.datasetName = dataset?.getDataValue("name");
+                    req.params.datasetName = dataset.getDataValue("name");
                     next();
                 }
                 else
@@ -64,6 +65,7 @@ class Middleware{
         }
     }
 
+    /*
     static checkAccountOwner ( req : Request, res : Response, next : NextFunction ) {
         try{
             if(req.params.jwtUserId === req.params.userId)
@@ -75,6 +77,7 @@ class Middleware{
             next(err);
         }
     }
+    */
 
     static async checkAdmin  ( req : Request, res : Response, next : NextFunction ) {
         try {
@@ -112,10 +115,12 @@ class MiddlewareBuilder{
         return this;
     }
 
+    /*
     addAccountOwnership(){
         this.middlewares.push(Middleware.checkAccountOwner);
         return this;
     }
+    */
 
     addDatasetOwnership(){
         this.middlewares.push(Middleware.checkDatasetOwner);

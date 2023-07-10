@@ -63,3 +63,9 @@ export class FileNotFoundError extends Error{
 		super(message);
 	}
 }
+
+export class EmailAlreadyExists extends Error{
+	constructor(message = "email already exists"){
+		super(message);
+	}
+}

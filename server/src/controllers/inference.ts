@@ -8,6 +8,7 @@ import User from '../models/user';
 import Image from '../models/image';
 import Dataset from '../models/dataset';
 import { ModelNotFound } from '../utils/exceptions';
+import { StatusCodes } from 'http-status-codes';
 
 class InferenceController {
 
@@ -17,13 +18,14 @@ class InferenceController {
         
         try{
             
-            const schema = z.coerce.number().int();
+            const schema = z.coerce.number({ invalid_type_error : "model id must be a number"})
+                            .int({ message : "model id must be a integer"});
             schema.parse(req.params.modelId);
 
             const model = await Model.findOne( { 
                                 where : { id : Number(req.params.modelId) }
                             });
-
+            
             if(model){
                 const modelName : string = model.getDataValue("name");
                 const ownedCredits = Number(req.params.credit).valueOf();
@@ -55,6 +57,11 @@ class InferenceController {
                     ));
                 }
                 
+                /* 
+                    return UNAUTHORIZED for ABORTED?
+                    let retStatus = data["billed"] ? StatusCodes.OK : StatusCodes.UNAUTHORIZED; 
+                */
+               
                 const datasetName = req.params.jwtUserId + req.params.datasetName
                 await SingletonProxy.getInstance().inference(modelName, datasetName, data)
                 .then( (data) => successHandler(res, data) )

@@ -11,10 +11,19 @@ class Response {
 			this.message = 	{ "message" : message };
 		else this.message = JSON.parse(JSON.stringify(message));
 	}
-	
+
 }
 
 class ResponseFactory{
+
+	static parseZod(message : string){
+		const errObj = JSON.parse(message);
+		return {
+			"message" : "bad request",
+			"validation" : errObj.map( (elem:any) => elem.message).
+										filter( (elem:any) => elem !== undefined )
+		}
+	}
 
 	static getErrResponse(err : Error){
 		let ret : Response | null = null;
@@ -45,10 +54,10 @@ class ResponseFactory{
 				ret = new Response(StatusCodes.FORBIDDEN, err.message);
 			break;
 			case "DatabaseError":
-				ret = new Response(StatusCodes.FORBIDDEN, "database error");
+				ret = new Response(StatusCodes.INTERNAL_SERVER_ERROR, "database error");
 			break;
 			case "ZodError":
-				ret = new Response(StatusCodes.BAD_REQUEST, "bad request");
+				ret = new Response(StatusCodes.BAD_REQUEST, ResponseFactory.parseZod(err.message));
 			break;
 			case "DatasetNotValid":
 				ret = new Response(StatusCodes.BAD_REQUEST, err.message);
