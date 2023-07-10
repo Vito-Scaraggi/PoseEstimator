@@ -6,6 +6,7 @@ import { DatasetNotFound, DatasetNotValid, FileNotFoundError, InvalidFile } from
 import { where, Op } from "sequelize";
 import multer from 'multer';
 import { successHandler } from "../utils/response";
+import fs from 'fs-extra'
 
 import User from "../models/user";
 
@@ -21,7 +22,7 @@ const updateDatasetSchema = z.object({
     format: z.string().min(2).max(4).optional()
 });
 
-const upload = multer({dest: './uploads/'})
+//const upload = multer({dest: './uploads/'})
 
 class DatasetsController{
 
@@ -122,18 +123,21 @@ class DatasetsController{
 
     static async insertImg(req : Request, res : Response, next: NextFunction){
         try{
+
             const ownedCredits = Number(req.params.credit).valueOf();
 
-            upload.array('image')(request, response, async (err : any) => {
+            /*upload.array('image')(request, response, async (err : any) => {
 
                 if(err instanceof multer.MulterError){
                     throw new InvalidFile();
                 }else if(err){
                     throw new Error('Something went wrong in the upload of the file');
                 }
-                console.warn("EEEEEEEEE " + request.file )
-                if(request.file){
-                    //Scalare i crediti dell'utente
+             */
+                console.warn("User credits = " + ownedCredits )
+
+                if(req.file){
+                    /*Scalare i crediti dell'utente
                     if (ownedCredits >= DatasetsController.imgCost){
                     
                         const user = await User.findOne({
@@ -142,13 +146,13 @@ class DatasetsController{
                         user?.decrement({ credit : DatasetsController.imgCost});
                         await user?.save();
                     }
+                    */
 
-                    successHandler(res, request.file, StatusCodes.CREATED);
+                    successHandler(res, req.file, StatusCodes.CREATED);
                 }else{
                     throw new FileNotFoundError();
                 }
-            })
-
+            
             // controllare uniformita estensione immmagine-dataset
         }catch(er){
             next(er)

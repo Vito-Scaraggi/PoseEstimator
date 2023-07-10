@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { Request, Response, NextFunction } from 'express'
 const bodyParser = require('body-parser')
 import sequelize from './utils/database'
 import DatasetsRouter from './routes/datasets';
@@ -10,6 +10,14 @@ const app = express();
 async () => ( await sequelize.sync({ alter : true, force : true}));
 
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true })); 
+
+app.use((request: Request, response: Response, next: NextFunction) => {
+    response.set('Access-Control-Allow-Origin', '*')
+    response.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
+    next()
+})
+
 app.use(UsersRouter);
 app.use(DatasetsRouter);
 app.use(InferenceRouter);
