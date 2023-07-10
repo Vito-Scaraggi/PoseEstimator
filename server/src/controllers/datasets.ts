@@ -135,6 +135,8 @@ class DatasetsController{
                 }
              */
                 console.warn("User credits = " + ownedCredits )
+                
+                console.warn("Filename: " + req.params.fileName)
 
                 if(req.file){
                     /*Scalare i crediti dell'utente
