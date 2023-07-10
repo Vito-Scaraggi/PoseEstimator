@@ -7,9 +7,17 @@ class Response {
 
 	constructor(status : number, message : any ){
 		this.status = status;
-		if ( typeof message === 'string')
-			this.message = 	{ "message" : message };
-		else this.message = JSON.parse(JSON.stringify(message));
+		switch(typeof message){
+			case 'undefined':
+				this.message = 	{ "message" : "unknown" };
+			break;
+			case 'string':
+				this.message = 	{ "message" : message };
+			break;
+			default:
+				this.message = JSON.parse(JSON.stringify(message));
+			break;
+		}
 	}
 
 }
