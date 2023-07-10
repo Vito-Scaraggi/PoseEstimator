@@ -71,6 +71,7 @@ class Middleware{
                 
                 if (datasetOwner === req.params.jwtUserId){
                     req.params.datasetName = dataset.getDataValue("name");
+                    req.params.datasetFormat = dataset.getDataValue("format");
                     next();
                 }
                 else

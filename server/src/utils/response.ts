@@ -85,6 +85,12 @@ class ResponseFactory{
 			case "ModelNotFound":
 				ret = new Response(StatusCodes.NOT_FOUND, err.message);
 			break;
+			case "CreditsTerminated":
+				ret = new Response(StatusCodes.UNAUTHORIZED, err.message);
+			break;
+			case "ExtensionNotMatched":
+				ret = new Response(StatusCodes.BAD_REQUEST, err.message);
+			break;
 			default:
 				console.log(err.constructor.name, err.stack);
 				ret = new Response(StatusCodes.INTERNAL_SERVER_ERROR, err.message);

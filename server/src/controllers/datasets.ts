@@ -2,13 +2,14 @@ import Dataset from "../models/dataset";
 import { Request, Response, NextFunction, response, request } from 'express'
 import { StatusCodes } from "http-status-codes";
 import { z } from 'zod'
-import { DatasetNotFound, DatasetNotValid, FileNotFoundError, InvalidFile } from "../utils/exceptions";
+import { CreditsTerminated, DatasetNotFound, DatasetNotValid, ExtensionNotMatched, FileNotFoundError, InvalidFile } from "../utils/exceptions";
 import { where, Op } from "sequelize";
-import multer from 'multer';
 import { successHandler } from "../utils/response";
 import fs from 'fs-extra'
+import path from 'path';
 
 import User from "../models/user";
+import Image from "../models/image";
 
 const createDatasetSchema = z.object({
     name: z.string().min(1).max(25),
@@ -17,11 +18,17 @@ const createDatasetSchema = z.object({
 });
 
 const updateDatasetSchema = z.object({
-    name: z.string().min(1).max(25).optional(),
+    name: z.string({required_error: ''})
+    .min(1,{message: ''})
+    .max(25)
+    .optional(),
     tags: z.array(z.string()).optional(),
     format: z.string().min(2).max(4).optional()
 });
 
+const insertImageSchema = z.object({
+    bbox: z.array(z.coerce.number().int()).optional()
+})
 //const upload = multer({dest: './uploads/'})
 
 class DatasetsController{
@@ -59,19 +66,16 @@ class DatasetsController{
 
     static async create(req : Request, res : Response, next: NextFunction){
         try{
-            const value = createDatasetSchema.safeParse(req.body);
+            const value = createDatasetSchema.parse(req.body);
             
-            if(value.success){
                 const DATASET = await Dataset.create({
-                    name: value.data.name,
-                    tags: value.data.tags || [],
-                    format: value.data.format,
+                    name: value.name,
+                    tags: value.tags || [],
+                    format: value.format,
                     userID: req.params.jwtUserId
                 });
                 successHandler(res, DATASET,StatusCodes.CREATED);
-            }else{
-                throw new DatasetNotValid();
-            }
+
         }catch(error){
             return next(error);
         }
@@ -93,28 +97,25 @@ class DatasetsController{
         try{
 
             const dat = await Dataset.findByPk(req.params.datasetId)
-            const value = updateDatasetSchema.safeParse(req.body);
+            const value = updateDatasetSchema.parse(req.body);
 
-            if(value.success){
+          
                 const sameNameDat = await Dataset.findOne({
                     where : { 
-                        [Op.and]: [{ userID : req.params.jwtUserId }, { 'name': value.data.name }] }
+                        [Op.and]: [{ userID : req.params.jwtUserId }, { 'name': value.name }] }
                 })
 
                 if(!sameNameDat){
                     dat?.update({
-                        name: value.data.name,
-                        tags: value.data.tags || [],
-                        format: value.data.format,
+                        name: value.name,
+                        tags: value.tags || [],
+                        format: value.format,
                     });
 
                     successHandler(res, dat, StatusCodes.CREATED);
                 }else{
                     throw new DatasetNotValid();
                 }
-            } else {
-                throw new DatasetNotValid();     
-            }
         
         }catch(error){
             return next(error);
@@ -124,36 +125,44 @@ class DatasetsController{
     static async insertImg(req : Request, res : Response, next: NextFunction){
         try{
 
+            const value = insertImageSchema.parse(req.body)
             const ownedCredits = Number(req.params.credit).valueOf();
 
-            /*upload.array('image')(request, response, async (err : any) => {
-
-                if(err instanceof multer.MulterError){
-                    throw new InvalidFile();
-                }else if(err){
-                    throw new Error('Something went wrong in the upload of the file');
-                }
-             */
-                console.warn("User credits = " + ownedCredits )
+            if(req.file){
+                const img_ext = path.parse(req.file.path).ext
                 
-                console.warn("Filename: " + req.params.fileName)
-
-                if(req.file){
-                    /*Scalare i crediti dell'utente
+                if(img_ext.replace('.','') === req.params.datasetFormat){
                     if (ownedCredits >= DatasetsController.imgCost){
                     
+                        const IMAGE = await Image.create({
+                            bbox: value.bbox,
+                            datasetID: req.params.datasetId
+                        });
+                    
+                        let file_id = IMAGE.get('file_id');
+                        const zeroPad = (num: number, places:number) => String(num).padStart(places, '0')
+                        file_id = zeroPad(file_id as number,12);
+
+                        const images_dir = path.parse(req.file.path).dir
+                        fs.rename(req.file.path, images_dir + '/' + file_id + img_ext)
+
+                        //Scalare i crediti dell'utente
                         const user = await User.findOne({
                             where : {id : req.params.jwtUserId}
                         });    
                         user?.decrement({ credit : DatasetsController.imgCost});
                         await user?.save();
-                    }
-                    */
 
-                    successHandler(res, req.file, StatusCodes.CREATED);
+                        successHandler(res, IMAGE.get('uuid'), StatusCodes.CREATED);
+                    }else{
+                        throw new CreditsTerminated();
+                    }
                 }else{
-                    throw new FileNotFoundError();
+                    throw new ExtensionNotMatched();
                 }
+            }else{
+                throw new FileNotFoundError();
+            }
             
             // controllare uniformita estensione immmagine-dataset
         }catch(er){

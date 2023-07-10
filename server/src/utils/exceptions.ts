@@ -69,3 +69,15 @@ export class EmailAlreadyExists extends Error{
 		super(message);
 	}
 }
+
+export class CreditsTerminated extends Error{
+	constructor(message = "Not enough credits"){
+		super(message);
+	}
+}
+
+export class ExtensionNotMatched extends Error{
+	constructor(message = "Extensions not matching between image and dataset"){
+		super(message);
+	}
+}

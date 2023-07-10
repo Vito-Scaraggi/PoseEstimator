@@ -5,8 +5,8 @@ import sequelize from "../utils/database"
 const Image = sequelize.define("image", {
     uuid: {
         type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
-        allowNull: false,
     },
     file_id: {
         type: Sequelize.INTEGER,
