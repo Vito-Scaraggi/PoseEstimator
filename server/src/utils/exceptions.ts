@@ -81,3 +81,8 @@ export class ExtensionNotMatched extends Error{
 		super(message);
 	}
 }
+export class InferenceError extends Error{
+	constructor(message = "error encountered during inference"){
+		super(message);
+	}
+}

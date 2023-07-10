@@ -4,6 +4,7 @@ import sequelize from './utils/database'
 import DatasetsRouter from './routes/datasets';
 
 import UsersRouter from './routes/users';
+import ModelRouter from './routes/model';
 import InferenceRouter from './routes/inference';
 
 const app = express();
@@ -21,5 +22,6 @@ app.use((request: Request, response: Response, next: NextFunction) => {
 app.use(UsersRouter);
 app.use(DatasetsRouter);
 app.use(InferenceRouter);
+app.use(ModelRouter);
 
 app.listen(process.env.PORT || 5000, () => { console.log("server started"); });

@@ -7,8 +7,7 @@ import Model from '../models/model';
 import User from '../models/user';
 import Image from '../models/image';
 import Dataset from '../models/dataset';
-import { ModelNotFound } from '../utils/exceptions';
-import { StatusCodes } from 'http-status-codes';
+import { ModelNotFound, InferenceError } from '../utils/exceptions';
 
 class InferenceController {
 
@@ -64,7 +63,12 @@ class InferenceController {
                
                 const datasetName = req.params.jwtUserId + req.params.datasetName
                 await SingletonProxy.getInstance().inference(modelName, datasetName, data)
-                .then( (data) => successHandler(res, data) )
+                .then( (data) => {
+                    if (data.error)
+                        throw new InferenceError(data.error);
+                    else 
+                        successHandler(res, data); 
+                })
                 .catch( ( err) => next(err) );
             }
             else
@@ -78,7 +82,7 @@ class InferenceController {
     static async getStatus(req : Request, res : Response, next : NextFunction){
         try{
             await SingletonProxy.getInstance().status(req.params.jobId)
-            .then( (data) => successHandler(res, data) )
+            .then( (data) => successHandler(res, data))
             .catch( ( err) => next(err) );
         }
         catch(err){

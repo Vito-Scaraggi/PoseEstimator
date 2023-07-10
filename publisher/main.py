@@ -1,9 +1,8 @@
 
 #from wrapper.utils import write_bbox, get_results
 from flask import Flask, request
-from celery import Celery, states
+from celery import Celery
 import os
-import traceback
 
 PORT = os.environ.get("PORT") or 5672
 RMQ_USER = os.environ.get("RMQ_USER") or "guest"
@@ -45,8 +44,7 @@ def status(id):
             ret["result"] = celery.AsyncResult(id, app = celery).result
 
         if status == 'FAILED':
-            ret["error"] = celery.AsyncResult(id, app = celery).info.get("exc_type")
-            #ret["message"] = celery.AsyncResult(id, app = celery).info.get("exc_message")
+            ret["error"] = celery.AsyncResult(id, app = celery).info.get("exc_message")
 
     except Exception as err:
         ret["error"] = str(err)
