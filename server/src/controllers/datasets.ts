@@ -2,11 +2,12 @@ import Dataset from "../models/dataset";
 import { Request, Response, NextFunction, response, request } from 'express'
 import { StatusCodes } from "http-status-codes";
 import { z } from 'zod'
-import { CreditsTerminated, DatasetNotFound, DatasetNotValid, ExtensionNotMatched, FileNotFoundError, InvalidFile } from "../utils/exceptions";
+import { BboxSyntaxError, DatasetNotFound, DatasetNotValid, ExtensionNotMatched, FileNotFoundError, InvalidFile, NotEnoughCredits } from "../utils/exceptions";
 import { where, Op } from "sequelize";
 import { successHandler } from "../utils/response";
 import fs from 'fs-extra'
 import path from 'path';
+import decompress from 'decompress';
 
 import User from "../models/user";
 import Image from "../models/image";
@@ -28,6 +29,16 @@ const updateDatasetSchema = z.object({
 
 const insertImageSchema = z.object({
     bbox: z.array(z.coerce.number().int()).optional()
+})
+
+const insertZipSchema = z.object({
+        bboxes: z.array(
+            z.object({
+                img: z.string(),
+                bbox: z.array(z.coerce.number().int())
+            }).optional()
+        ).optional()
+    
 })
 //const upload = multer({dest: './uploads/'})
 
@@ -52,6 +63,7 @@ class DatasetsController{
             const datasets =  await Dataset.findAll({
                 where : { userID : req.params.jwtUserId}
             })
+            
 
             if(datasets){
                 successHandler(res, datasets);
@@ -130,15 +142,29 @@ class DatasetsController{
 
             if(req.file){
                 const img_ext = path.parse(req.file.path).ext
-                
+
+                 //Check su uniformita estensione immmagine-dataset
+                 
                 if(img_ext.replace('.','') === req.params.datasetFormat){
                     if (ownedCredits >= DatasetsController.imgCost){
                     
-                        const IMAGE = await Image.create({
-                            bbox: value.bbox,
-                            datasetID: req.params.datasetId
-                        });
-                    
+                        let IMAGE;
+                        
+                        if(!value.bbox){
+                            IMAGE = await Image.create({
+                                datasetID: req.params.datasetId
+                            });
+                        }else{
+                            if(value.bbox.length === 4){
+                                IMAGE = await Image.create({
+                                    bbox: value.bbox,
+                                    datasetID: req.params.datasetId
+                                });
+                            }else{
+                                throw new BboxSyntaxError();
+                            }
+                        }
+
                         let file_id = IMAGE.get('file_id');
                         const zeroPad = (num: number, places:number) => String(num).padStart(places, '0')
                         file_id = zeroPad(file_id as number,12);
@@ -155,7 +181,7 @@ class DatasetsController{
 
                         successHandler(res, IMAGE.get('uuid'), StatusCodes.CREATED);
                     }else{
-                        throw new CreditsTerminated();
+                        throw new NotEnoughCredits();
                     }
                 }else{
                     throw new ExtensionNotMatched();
@@ -163,10 +189,100 @@ class DatasetsController{
             }else{
                 throw new FileNotFoundError();
             }
-            
-            // controllare uniformita estensione immmagine-dataset
         }catch(er){
             next(er)
+        }
+    }
+
+    static async insertZip(req : Request, res : Response, next: NextFunction){
+        try{
+            console.log("body: " + req.body['info'])
+            const value = insertZipSchema.parse(req.body)
+            const ownedCredits = Number(req.params.credit).valueOf();
+            let uuidList: string[] = []
+            let counterWrongImage: number = 0
+
+            if(req.file){
+                
+                decompress(req.file.path, path.parse(req.file.path).dir)
+                .then((files) => {
+                    console.log(files.length);
+                    if(ownedCredits >= DatasetsController.imgCost * files.length){
+
+                        //per ogni immagine nello zip
+                        files.forEach(function(file){
+                            const img_ext = path.parse(file.path).ext
+                            //check se l'estensione dei file corrisponde a quella del dataset
+                            if(img_ext.replace('.','') === req.params.datasetFormat){
+
+                                
+                                const bbox_img = value.bboxes?.find(
+                                    element => element?.img === path.parse(file.path).base
+                                    )?.bbox
+                                
+                                let img;
+                                if(!bbox_img){
+                                    img = Image.create({
+                                        datasetID: req.params.datasetId
+                                    });
+                                }
+
+                                if(bbox_img && bbox_img.length === 4){
+                                    img = Image.create({
+                                        bbox: bbox_img,
+                                        datasetID: req.params.datasetId
+                                    });
+                                }else{
+                                    counterWrongImage += 1;
+                                }
+                                
+                                if(img){
+                                    img.then(
+                                        (image) => {
+    
+                                            let file_id = image.get('file_id');
+                                            const zeroPad = (num: number, places:number) => String(num).padStart(places, '0')
+                                            file_id = zeroPad(file_id as number,12);
+                    
+                                            const images_dir = path.parse(file.path).dir
+                                            fs.rename(file.path, images_dir + '/' + file_id + img_ext)
+                    
+                                            //Scalare i crediti dell'utente
+                                            const user = User.findOne({
+                                                where : {id : req.params.jwtUserId}
+                                            }).then((u) =>{
+                                                u?.decrement({ credit : DatasetsController.imgCost * files.length});
+                                                u?.save();
+                                            })    
+                                            uuidList.push(image.get('uuid') as string)
+                                        }
+                                    ).catch((err) => {
+                                        
+                                    });
+                                }
+                                
+                            }else{
+                                //bisogna rimuovere l'immagine
+                               counterWrongImage += 1;
+                            }
+                        });//end forEach
+
+                        //eliminare lo zip
+                        
+                        successHandler(res.append('Warning', counterWrongImage + " images not uploaded"), uuidList , StatusCodes.CREATED);
+                    }else{
+                        throw new NotEnoughCredits();
+                    }
+                    
+                })
+                .catch((err) => {
+                    next(err)
+                });
+            }
+
+
+        }catch(error){
+            next(error)
         }
     }
 

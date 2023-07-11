@@ -8,15 +8,29 @@ import { randomBytes } from 'crypto';
 
 import ResponseFactory from '../utils/response';
 import { MissingToken, MismatchedUser, RestrictedToAdmin, MismatchedDatasetOwner,
-        UserNotFound, DatasetNotFound} from '../utils/exceptions';
+        UserNotFound, DatasetNotFound, FileFormatError} from '../utils/exceptions';
 import User from '../models/user';
 import Dataset from '../models/dataset';
 
+//0 = immagini, 1 = zip
+let getRegexFormats = function(formatMode: number){
+   switch(formatMode){
+        case 0:
+            return /jpeg|jpg|png/;
+        break;
+        case 1: 
+            return /zip/;
+        break;
+        default:
+            return /jpeg|jpg|png/;
+   }
+}
 
-
-const checkFileType = function (file: any, cb: any) {
+const checkFileType = function (file: any, formatMode: number, cb: any) {
+    
     //Estensioni permesse
-    const fileTypes = /jpeg|jpg|png|zip/;
+    const fileTypes = getRegexFormats(formatMode);
+    console.log(fileTypes + " " + formatMode);
     
     //check delle estensioni
     const extName = fileTypes.test(path.extname(file.originalname).toLowerCase());
@@ -25,13 +39,15 @@ const checkFileType = function (file: any, cb: any) {
     if (mimeType && extName) {
         return cb(null, true);
     } else {
-        cb(new Error(" You can Only Upload Images!!"));
+        cb(new FileFormatError());
     }
 };
 
 class Middleware{
 
     private static secret : Buffer = fs.readFileSync("./secret");
+
+    private static formatMode: number = 0;
 
     static async checkAuth ( req : Request, res : Response, next : NextFunction ) {
        try{
@@ -117,6 +133,10 @@ class Middleware{
         res.status(response.status).send(response.message);
     };
 
+    static async upload(req : Request, res : Response, formatMode :number ,next : NextFunction){
+        
+    }
+
     static async getUpload(req : Request, res : Response, next : NextFunction) {
         try{
             const datasetDir = './images/' + req.params.jwtUserId + req.params.datasetName
@@ -128,8 +148,7 @@ class Middleware{
                     },
                 
                 filename: (req, file, cb) => {
-                    const fileName = 'tmp--' + Date.now() + randomBytes(16).toString(`hex`) + `${file.originalname}`  ;
-                    req.params.fileName = fileName; //il nome del file viene aggiunto ai params
+                    const fileName = 'tmp--' + Date.now() + randomBytes(16).toString(`hex`) + `${file.originalname}`;
                     cb(null, fileName);
                 },
                 
@@ -137,12 +156,43 @@ class Middleware{
             
             const upload = multer({
                 storage: storageEngine,
-                fileFilter: (req, file, cb) => {checkFileType(file, cb);},
+                fileFilter: (req, file, cb) => {checkFileType(file, 0 ,cb);},
             });
         
             upload.single('image')(req,res, next);
 
-          
+        }catch(error){
+            next(error);
+        }
+        
+    };
+
+    static async getUploadZip(req : Request, res : Response, next : NextFunction) {
+        try{
+            const datasetDir = './images/' + req.params.jwtUserId + req.params.datasetName
+            await fs.mkdir(datasetDir,{recursive: true})
+
+            const storageEngine = multer.diskStorage({
+                destination: (req, file, cb) => {
+
+                        cb(null, datasetDir);
+                    },
+                
+                filename: (req, file, cb) => {
+                    const fileName = 'tmp--' + Date.now() + randomBytes(16).toString(`hex`) + `${file.originalname}`;
+                    cb(null, fileName);
+                },
+                
+            });
+            
+            const upload = multer({
+                storage: storageEngine,
+                fileFilter: (req, file, cb) => {checkFileType(file, 1 ,cb);},
+            });
+        
+           
+            upload.fields([{name:'info'}, {name:'file'}])(req,res, next);
+
         }catch(error){
             next(error);
         }
@@ -191,6 +241,11 @@ class MiddlewareBuilder{
 
     addUploader(){
         this.middlewares.push(Middleware.getUpload);
+        return this;
+    }
+
+    addUploaderZip(){
+        this.middlewares.push(Middleware.getUploadZip);
         return this;
     }
 

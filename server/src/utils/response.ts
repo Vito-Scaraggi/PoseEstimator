@@ -85,8 +85,14 @@ class ResponseFactory{
 			case "ModelNotFound":
 				ret = new Response(StatusCodes.NOT_FOUND, err.message);
 			break;
-			case "CreditsTerminated":
+			case "NotEnoughCredits":
 				ret = new Response(StatusCodes.UNAUTHORIZED, err.message);
+			break;
+			case "BboxSyntaxError":
+				ret = new Response(StatusCodes.BAD_REQUEST, err.message);
+			break;
+			case "FileFormatError":
+				ret = new Response(StatusCodes.BAD_REQUEST, err.message);
 			break;
 			case "ExtensionNotMatched":
 				ret = new Response(StatusCodes.BAD_REQUEST, err.message);
