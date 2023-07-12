@@ -8,15 +8,29 @@ import { randomBytes } from 'crypto';
 
 import ResponseFactory from '../utils/response';
 import { MissingToken, MismatchedUser, RestrictedToAdmin, MismatchedDatasetOwner,
-        UserNotFound, DatasetNotFound} from '../utils/exceptions';
+        UserNotFound, DatasetNotFound, FileFormatError} from '../utils/exceptions';
 import User from '../models/user';
 import Dataset from '../models/dataset';
 
+//0 = immagini, 1 = zip
+let getRegexFormats = function(formatMode: number){
+   switch(formatMode){
+        case 0:
+            return /jpeg|jpg|png/;
+        break;
+        case 1: 
+            return /zip/;
+        break;
+        default:
+            return /jpeg|jpg|png/;
+   }
+}
 
-
-const checkFileType = function (file: any, cb: any) {
+const checkFileType = function (file: any, formatMode: number, cb: any) {
+    
     //Estensioni permesse
-    const fileTypes = /jpeg|jpg|png|zip/;
+    const fileTypes = getRegexFormats(formatMode);
+
     
     //check delle estensioni
     const extName = fileTypes.test(path.extname(file.originalname).toLowerCase());
@@ -25,9 +39,26 @@ const checkFileType = function (file: any, cb: any) {
     if (mimeType && extName) {
         return cb(null, true);
     } else {
-        cb(new Error(" You can Only Upload Images!!"));
+        cb(new FileFormatError());
     }
 };
+/*
+const checkFileTypeZip = function (file: any, cb: any) {
+    
+    //Estensioni permesse
+    const fileTypes = getRegexFormats(1);
+
+    //check delle estensioni
+    const extName = fileTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimeType = fileTypes.test(file.mimetype);
+    
+    if (mimeType && extName) {
+        return cb(null, true);
+    } else {
+        cb(new FileFormatError());
+    }
+};
+*/
 
 
 // class that provides static middleware methods
@@ -133,9 +164,41 @@ class Middleware{
         res.status(response.status).json(response.message);
     };
 
-    static async getUpload(req : Request, res : Response, next : NextFunction) {
+    static getUpload(fileFormat: number){
+        return async (req : Request, res : Response, next : NextFunction) => {
+            try{
+                const datasetDir = './images/' + req.params.datasetName
+                await fs.mkdir(datasetDir,{recursive: true})
+
+                const storageEngine = multer.diskStorage({
+                    destination: (req, file, cb) => {
+                            cb(null, datasetDir);
+                        },
+                    
+                    filename: (req, file, cb) => {
+                        const fileName = 'tmp--' + Date.now() + randomBytes(16).toString(`hex`) + `${file.originalname}`;
+                        cb(null, fileName);
+                    },
+                    
+                });
+                
+                const upload = multer({
+                    storage: storageEngine,
+                    fileFilter: (req, file, cb) => {checkFileType(file, fileFormat, cb);},
+                });
+            
+                upload.single('file')(req,res, next);
+
+            }catch(error){
+                next(error);
+            }
+        };
+    }
+
+/*
+    static async getUploadZip(req : Request, res : Response, next : NextFunction) {
         try{
-            const datasetDir = './images/' + req.params.jwtUserId + req.params.datasetName
+            const datasetDir = './images/' + req.params.datasetName
             await fs.mkdir(datasetDir,{recursive: true})
 
             const storageEngine = multer.diskStorage({
@@ -144,25 +207,25 @@ class Middleware{
                     },
                 
                 filename: (req, file, cb) => {
-                    const fileName = 'tmp--' + Date.now() + randomBytes(16).toString(`hex`) + `${file.originalname}`  ;
-                    req.params.fileName = fileName; //il nome del file viene aggiunto ai params
+                    const fileName = 'tmp--' + Date.now() + randomBytes(16).toString(`hex`) + `${file.originalname}`;
                     cb(null, fileName);
                 },
+                
                 
             });
             
             const upload = multer({
                 storage: storageEngine,
-                fileFilter: (req, file, cb) => {checkFileType(file, cb);},
+                fileFilter: (req, file, cb) => {checkFileTypeZip(file ,cb);},
             });
         
-            upload.single('image')(req,res, next);
+           upload.single('file')(req,res,next)
 
-          
         }catch(error){
             next(error);
         }
     };
+    */
 }
 
 // builder class to create lists of middleware functions
@@ -218,7 +281,12 @@ class MiddlewareBuilder{
     }
 
     addUploader(){
-        this.middlewares.push(Middleware.getUpload);
+        this.middlewares.push(Middleware.getUpload(0));
+        return this;
+    }
+
+    addUploaderZip(){
+        this.middlewares.push(Middleware.getUpload(1));
         return this;
     }
 

@@ -74,8 +74,20 @@ export class EmailAlreadyExists extends Error{
 	}
 }
 
-export class CreditsTerminated extends Error{
-	constructor(message = "Not enough credits"){
+export class NotEnoughCredits extends Error{
+	constructor(message = "Not enough credits to complete the action"){
+		super(message);
+	}
+}
+
+export class BboxSyntaxError extends Error{
+	constructor(message = "The bbox must have 4 values"){
+		super(message);
+	}
+}
+
+export class FileFormatError extends Error{
+	constructor(message = "the format of the file is not accepted"){
 		super(message);
 	}
 }

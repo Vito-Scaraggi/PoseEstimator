@@ -15,6 +15,7 @@ DatasetsRouter
             .delete("/dataset/:datasetId", new MWBuilder().addAuth().addDatasetOwnership().addCustom( DatasetsController.delete).build())
             .put("/dataset/:datasetId", new MWBuilder().addAuth().addDatasetOwnership().addCustom( DatasetsController.updateById).build())
             .post("/dataset/:datasetId/img", new MWBuilder().addAuth().addDatasetOwnership().addUploader().addCustom( DatasetsController.insertImg).build())
+            .post("/dataset/:datasetId/zip", new MWBuilder().addAuth().addDatasetOwnership().addUploaderZip().addCustom( DatasetsController.insertZip).build())
 
 
 export default DatasetsRouter;
