@@ -1,6 +1,7 @@
 import Sequelize from "sequelize"
 import sequelize from "../utils/database"
 
+// sequelize User model definition
 const User = sequelize.define("user", {
     id: {
         type: Sequelize.INTEGER,
@@ -43,5 +44,4 @@ const User = sequelize.define("user", {
     freezeTableName: true 
 });
 
-// Esportazione del modello User per l'uso in altri moduli
 export default User;

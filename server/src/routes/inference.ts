@@ -2,20 +2,17 @@ import express from 'express'
 import C from "../controllers/inference"
 import MWBuilder from '../middlewares/middleware';
 
-const InferenceRouter = express.Router()
+// inference router instantiation
+const InferenceRouter = express.Router();
 
-const inferenceMW = new MWBuilder()
-                        .addAuth()
-                        .addDatasetOwnership()
-                        .addCustom(C.startInference)
-                        .build();
+// simple authorization middleware
+const authMW = new MWBuilder().addAuth();
 
-const statusMW = new MWBuilder()
-                    .addAuth()
-                    .addCustom(C.getStatus)
-                    .build();
-
-InferenceRouter.get('/model/:modelId/inference/:datasetId', inferenceMW)
-                .get('/status/:jobId', statusMW);
+// inference routes definition
+InferenceRouter.get('/model/:modelId/inference/:datasetId', authMW.copy()
+                                                            .addDatasetOwnership()
+                                                            .build(C.startInference))
+                .get('/status/:jobId', authMW.copy()
+                                            .build(C.getStatus));
 
 export default InferenceRouter;

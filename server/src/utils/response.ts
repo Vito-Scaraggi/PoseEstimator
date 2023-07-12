@@ -1,12 +1,17 @@
 import {StatusCodes} from 'http-status-codes';
 import { Response as Res } from 'express'
 
+// response object 
 class Response {
-	status : number;
+
+	// status code
+	status : StatusCodes;
+	// message
 	message : {};
 
-	constructor(status : number, message : any ){
+	constructor(status : StatusCodes, message : any ){
 		this.status = status;
+		// build message json object
 		switch(typeof message){
 			case 'undefined':
 				this.message = 	{ "message" : "unknown" };
@@ -15,14 +20,18 @@ class Response {
 				this.message = 	{ "message" : message };
 			break;
 			default:
-				this.message = JSON.parse(JSON.stringify(message));
+				this.message = message;
 			break;
 		}
 	}
 
 }
 
+// class that creates response objects
 class ResponseFactory{
+
+	// parse Zod exception message to create
+	// more readable message
 
 	static parseZod(message : string){
 		const errObj = JSON.parse(message);
@@ -33,8 +42,12 @@ class ResponseFactory{
 		}
 	}
 
+	// create response object in case of error
 	static getErrResponse(err : Error){
 		let ret : Response | null = null;
+		
+		// creates different response object
+		// depending on type of error thrown
 		
 		switch(err.constructor.name){
 			case "MissingToken":
@@ -91,6 +104,7 @@ class ResponseFactory{
 			case "ExtensionNotMatched":
 				ret = new Response(StatusCodes.BAD_REQUEST, err.message);
 			break;
+			// default status code is INTERNAL SERVER ERROR
 			default:
 				console.log(err.constructor.name, err.stack);
 				ret = new Response(StatusCodes.INTERNAL_SERVER_ERROR, err.message);
@@ -99,17 +113,20 @@ class ResponseFactory{
 		return ret;
 	}
 
+	// create response object in case of success
 	static getSuccessResponse(message : any, 
-								status : number = StatusCodes.OK) : Response{
+								status : StatusCodes = StatusCodes.OK) : Response{
 		return new Response(status, message);
 	}
 }
 
+// send a response object in case of success
 export function successHandler(res : Res, message : any, 
-								status : number = StatusCodes.OK){
-	
+								status : StatusCodes = StatusCodes.OK){
+	// create success response object
 	let response = ResponseFactory.getSuccessResponse(message, status);
-    res.status(response.status).send(response.message);
+    // send response status and message
+	res.status(response.status).json(response.message);
 }
 
 export default ResponseFactory;

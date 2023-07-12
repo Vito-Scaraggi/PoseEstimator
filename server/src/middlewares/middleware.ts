@@ -29,18 +29,27 @@ const checkFileType = function (file: any, cb: any) {
     }
 };
 
+
+// class that provides static middleware methods
 class Middleware{
 
+    // secret key used here to verify jwt token
     private static secret : Buffer = fs.readFileSync("./secret");
 
+    // check authorization token
     static async checkAuth ( req : Request, res : Response, next : NextFunction ) {
        try{
             const token = req.headers.authorization;
+            // check if token is provided
             if(token){
+                // decode token with secret key
                 const decoded : any = jwt.verify(token.toString(), Middleware.secret);
+                // enrich request params with user id
                 req.params.jwtUserId = decoded.id;
-                const user = await User.findOne( { where : { id : req.params.jwtUserId } } );
+                const user = await User.findByPk(req.params.jwtUserId);
+                // check if user exists
                 if (user){
+                    // enrich request params with admin flag and owned credit
                     req.params.isAdmin = user.getDataValue("admin");
                     req.params.credit = user.getDataValue("credit");
                     next();
@@ -56,20 +65,23 @@ class Middleware{
        }
     }
 
+    // check if user is dataset's owner
     static async checkDatasetOwner ( req : Request, res : Response, next : NextFunction ) {
         try{
 
+            // validate dataset id
             const schema = z.coerce.number({ invalid_type_error : "dataset id must be a number"})
                             .int({ message : "dataset id must be a integer"});
             schema.parse(req.params.datasetId);
 
-            const dataset = await Dataset
-                                .findOne( { where : { id : req.params.datasetId}});
-            
+            const dataset = await Dataset.findByPk(req.params.datasetId);
+
+            // check if dataset exists
             if (dataset){
                 let datasetOwner = dataset.getDataValue("userID");
-                
+                // check if dataset owner and user matches
                 if (datasetOwner === req.params.jwtUserId){
+                    // enrich request params with dataset name and image format
                     req.params.datasetName = dataset.getDataValue("name");
                     req.params.datasetFormat = dataset.getDataValue("format");
                     next();
@@ -100,6 +112,7 @@ class Middleware{
     }
     */
 
+    // check if user is admin
     static async checkAdmin  ( req : Request, res : Response, next : NextFunction ) {
         try {
             if(Boolean(req.params.isAdmin).valueOf() === true)
@@ -112,9 +125,12 @@ class Middleware{
         }
     }
 
+    // handle errors thrown by previous middleware methods
     static async errorHandler (err : Error, req : Request, res : Response, next : NextFunction) {
+        // create error response object
         let response = ResponseFactory.getErrResponse(err);
-        res.status(response.status).send(response.message);
+        // send response status and message
+        res.status(response.status).json(response.message);
     };
 
     static async getUpload(req : Request, res : Response, next : NextFunction) {
@@ -149,19 +165,28 @@ class Middleware{
     };
 }
 
+// builder class to create lists of middleware functions
 class MiddlewareBuilder{
 
+    // list of middleware functions
     private middlewares : any[];
 
-    constructor(){
-        this.middlewares = [];
+    constructor(middlewares? : any[]){
+        this.middlewares = middlewares? middlewares : [];
     }
 
+    // return a deep copy of MiddlewareBuilder object
+    copy(){
+        return new MiddlewareBuilder(this.middlewares.slice());
+    }
+
+    // to be deleted
     addCustom( fun : CallableFunction){
         this.middlewares.push(fun);
         return this;
     }
 
+    // add authorization middleware
     addAuth(){
         this.middlewares.push(Middleware.checkAuth);
         return this;
@@ -174,16 +199,19 @@ class MiddlewareBuilder{
     }
     */
 
+    // add dataset ownership middleware
     addDatasetOwnership(){
         this.middlewares.push(Middleware.checkDatasetOwner);
         return this;
     }
 
+    // add error handling middleware
     addErrorHandling(){
         this.middlewares.push(Middleware.errorHandler);
         return this;
     }
 
+    // add admin authorization middleware
     addAdmin(){
         this.middlewares.push(Middleware.checkAdmin);
         return this;
@@ -194,9 +222,17 @@ class MiddlewareBuilder{
         return this;
     }
 
-    build(err : boolean = true){
+    // add controller function if specified
+    // add error handling middleware by default
+    // return list of middleware functions
+    
+    build(controllerFun? : CallableFunction, err : boolean = true){
+        if (controllerFun)
+            this.middlewares.push(controllerFun);
+        
         if (err)
             this.addErrorHandling();
+        
         return this.middlewares;
     }
 }

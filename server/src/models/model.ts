@@ -1,7 +1,7 @@
 import Sequelize from "sequelize"
 import sequelize from "../utils/database"
 
-// Definizione del modello Model
+// sequelize Model model definition
 const Model = sequelize.define("model", {
     id: {
         type: Sequelize.INTEGER,
@@ -18,5 +18,4 @@ const Model = sequelize.define("model", {
     freezeTableName: true 
 });
 
-// Esportazione del modello Model per l'uso in altri moduli
 export default Model

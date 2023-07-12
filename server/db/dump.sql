@@ -38,8 +38,8 @@ CREATE TABLE IF NOT EXISTS public.dataset
     CONSTRAINT dataset_pkey PRIMARY KEY (id),
     CONSTRAINT user_id FOREIGN KEY ("userID")
         REFERENCES public."user" (id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
 )
 
 TABLESPACE pg_default;
@@ -64,8 +64,8 @@ CREATE TABLE IF NOT EXISTS public.image
     CONSTRAINT image_pkey PRIMARY KEY ("uuid"),
     CONSTRAINT dataset_id FOREIGN KEY ("datasetID")
         REFERENCES public.dataset (id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
 )
 
 TABLESPACE pg_default;

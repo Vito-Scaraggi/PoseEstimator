@@ -1,7 +1,7 @@
 import Sequelize from "sequelize"
 import sequelize from "../utils/database"
 
-// Definizione del modello Dataset
+// sequelize Dataset model definition
 const Dataset = sequelize.define("dataset", {
     id: {
         type: Sequelize.INTEGER,
@@ -31,6 +31,4 @@ const Dataset = sequelize.define("dataset", {
     freezeTableName: true 
 });
 
-
-// Esportazione del modello Dataset per l'uso in altri moduli
 export default Dataset

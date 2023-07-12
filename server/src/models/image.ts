@@ -1,7 +1,7 @@
 import Sequelize from "sequelize"
 import sequelize from "../utils/database"
 
-// Definizione del modello Dataset
+// sequelize Image model definition
 const Image = sequelize.define("image", {
     uuid: {
         type: Sequelize.UUID,
@@ -26,6 +26,4 @@ const Image = sequelize.define("image", {
     freezeTableName: true 
 });
 
-
-// Esportazione del modello Dataset per l'uso in altri moduli
 export default Image

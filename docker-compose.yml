@@ -22,7 +22,7 @@ services:
     build : "./server"
     volumes : 
       - "./server:/server"
-      - "../HRNet-Human-Pose-Estimation/data/babypose/images:/img"
+      - "./HRNet-Human-Pose-Estimation/data/babypose/images:/server/images"
     ports:
       - "5000:5000"
     depends_on:

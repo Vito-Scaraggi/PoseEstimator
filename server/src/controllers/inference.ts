@@ -6,46 +6,44 @@ import { successHandler }  from '../utils/response';
 import Model from '../models/model';
 import User from '../models/user';
 import Image from '../models/image';
-import Dataset from '../models/dataset';
 import { ModelNotFound, InferenceError } from '../utils/exceptions';
 
+
+// Controller class for handling inference routes
 class InferenceController {
 
+    // amount of credit required for a single inference
     private static infCost : number = Number(process.env.INF_COST) || 5;
 
+    // send a inference request if user has enough credits
     static async startInference(req : Request, res : Response, next : NextFunction){
         
         try{
             
+            // validate model id
             const schema = z.coerce.number({ invalid_type_error : "model id must be a number"})
                             .int({ message : "model id must be a integer"});
             schema.parse(req.params.modelId);
 
-            const model = await Model.findOne( { 
-                                where : { id : Number(req.params.modelId) }
-                            });
+            // get selected model from db
+            const model = await Model.findByPk(req.params.modelId);
             
             if(model){
                 const modelName : string = model.getDataValue("name");
                 const ownedCredits = Number(req.params.credit).valueOf();
 
                 let data : { [key:string] : any} = {};
-                data["billed"] = false;
+                let billed  : boolean = false;
 
+                // check if user has enough credits
                 if (ownedCredits >= InferenceController.infCost){
                     
-                    const user = await User.findOne({
-                        where : {id : req.params.jwtUserId}
-                    });    
-                    user?.decrement({ credit : InferenceController.infCost});
-                    await user?.save();
-
-                    data["billed"] = true;
-                    data["img_format"] = await Dataset.findOne({
-                        where : {id : req.params.datasetId}
-                    })
-                    .then( (data) => data?.getDataValue("img_format"));
-
+                    /*  enrich request body with
+                        format of imgs to be processed and
+                        bounding boxes of imgs
+                    */
+                    billed = true;
+                    data["img_format"] = req.params.datasetFormat;
                     data["bboxes"] = await Image.findAll({
                         where : {datasetID : req.params.datasetId}
                     })  
@@ -60,16 +58,28 @@ class InferenceController {
                     return UNAUTHORIZED for ABORTED?
                     let retStatus = data["billed"] ? StatusCodes.OK : StatusCodes.UNAUTHORIZED; 
                 */
-               
-                const datasetName = req.params.jwtUserId + req.params.datasetName
-                await SingletonProxy.getInstance().inference(modelName, datasetName, data)
-                .then( (data) => {
-                    if (data.error)
-                        throw new InferenceError(data.error);
-                    else 
-                        successHandler(res, data); 
-                })
-                .catch( ( err) => next(err) );
+
+                data["billed"] = billed;
+                const datasetName = req.params.datasetName
+                
+                /*  send inference request to proxy
+                    if billed = false request will be sent
+                    but inference will be aborted by worker
+                    and user won't be billed
+                */
+
+                const result = await SingletonProxy.getInstance().inference(modelName, datasetName, data)
+
+                if (result.error)
+                        throw new InferenceError(result.error);
+                else {
+                    if (billed){
+                        const user = await User.findByPk(req.params.jwtUserId);    
+                        user?.decrement({ credit : InferenceController.infCost});
+                        await user?.save();
+                    }
+                    successHandler(res, result); 
+                }
             }
             else
                 throw new ModelNotFound();
@@ -79,6 +89,7 @@ class InferenceController {
         }
     }
 
+    // return inference request status
     static async getStatus(req : Request, res : Response, next : NextFunction){
         try{
             await SingletonProxy.getInstance().status(req.params.jobId)

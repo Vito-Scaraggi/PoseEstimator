@@ -83,7 +83,7 @@ class DatasetsController{
 
     static async delete(req : Request, res : Response, next: NextFunction){
         try{
-            const datasetToDelete =  await Dataset.findByPk(req.params.jwtUserId);
+            const datasetToDelete =  await Dataset.findByPk(req.params.datasetId);
 
             datasetToDelete?.destroy()
             successHandler(res, datasetToDelete);
