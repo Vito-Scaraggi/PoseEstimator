@@ -31,15 +31,19 @@ const insertImageSchema = z.object({
     bbox: z.array(z.coerce.number().int()).optional()
 })
 
-const insertZipSchema = z.object({
-        bboxes: z.array(
+const insertZipSchema =  z.array(
             z.object({
                 img: z.string(),
-                bbox: z.array(z.coerce.number().int())
-            }).optional()
+                bbox: z.array(z.coerce.number().int(),{invalid_type_error: "Non prende i bbox interni"})
+            }).optional(),
+            {invalid_type_error: "Non prende i bboxes"}
         ).optional()
-    
-})
+
+const insertZipElemSchema = 
+            z.object({
+                img: z.string(),
+                bbox: z.array(z.coerce.number().int(),{invalid_type_error: "Non prende i bbox interni"})
+            }).optional()
 //const upload = multer({dest: './uploads/'})
 
 class DatasetsController{
@@ -137,7 +141,8 @@ class DatasetsController{
     static async insertImg(req : Request, res : Response, next: NextFunction){
         try{
 
-            const value = insertImageSchema.parse(req.body)
+            const body = JSON.parse(req.body["info"])
+            const value = insertImageSchema.parse(body)
             const ownedCredits = Number(req.params.credit).valueOf();
 
             if(req.file){
@@ -179,7 +184,10 @@ class DatasetsController{
                         user?.decrement({ credit : DatasetsController.imgCost});
                         await user?.save();
 
-                        successHandler(res, IMAGE.get('uuid'), StatusCodes.CREATED);
+                        const jsonMessage = {
+                            "image_uuid": IMAGE.get('uuid')
+                        }
+                        successHandler(res, jsonMessage, StatusCodes.CREATED);
                     }else{
                         throw new NotEnoughCredits();
                     }
@@ -196,96 +204,86 @@ class DatasetsController{
 
     static async insertZip(req : Request, res : Response, next: NextFunction){
         try{
-            console.log("body: " + req.body['info'])
-            const value = insertZipSchema.parse(req.body)
-            const ownedCredits = Number(req.params.credit).valueOf();
-            let uuidList: string[] = []
-            let counterWrongImage: number = 0
-
             if(req.file){
+
+                const body = JSON.parse(req.body["info"])
+                const value = insertZipSchema.parse(body)
+                const ownedCredits = Number(req.params.credit).valueOf();
                 
-                decompress(req.file.path, path.parse(req.file.path).dir)
-                .then((files) => {
-                    console.log(files.length);
-                    if(ownedCredits >= DatasetsController.imgCost * files.length){
+                const uuidList: string[] = []
+                const wrongImages: string[] = []
+                let counterWrongImage : number = 0
 
-                        //per ogni immagine nello zip
-                        files.forEach(function(file){
-                            const img_ext = path.parse(file.path).ext
-                            //check se l'estensione dei file corrisponde a quella del dataset
-                            if(img_ext.replace('.','') === req.params.datasetFormat){
+                const datasetDir = path.parse(req.file.path).dir
+                
+                const files = await decompress(req.file.path, datasetDir)
 
-                                
-                                const bbox_img = value.bboxes?.find(
-                                    element => element?.img === path.parse(file.path).base
-                                    )?.bbox
-                                
-                                let img;
-                                if(!bbox_img){
-                                    img = Image.create({
-                                        datasetID: req.params.datasetId
-                                    });
-                                }
-
-                                if(bbox_img && bbox_img.length === 4){
-                                    img = Image.create({
-                                        bbox: bbox_img,
-                                        datasetID: req.params.datasetId
-                                    });
-                                }else{
-                                    counterWrongImage += 1;
-                                }
-                                
-                                if(img){
-                                    img.then(
-                                        (image) => {
-    
-                                            let file_id = image.get('file_id');
-                                            const zeroPad = (num: number, places:number) => String(num).padStart(places, '0')
-                                            file_id = zeroPad(file_id as number,12);
-                    
-                                            const images_dir = path.parse(file.path).dir
-                                            fs.rename(file.path, images_dir + '/' + file_id + img_ext)
-                    
-                                            //Scalare i crediti dell'utente
-                                            const user = User.findOne({
-                                                where : {id : req.params.jwtUserId}
-                                            }).then((u) =>{
-                                                u?.decrement({ credit : DatasetsController.imgCost * files.length});
-                                                u?.save();
-                                            })    
-                                            uuidList.push(image.get('uuid') as string)
-                                        }
-                                    ).catch((err) => {
-                                        
-                                    });
-                                }
-                                
+                if(ownedCredits >= DatasetsController.imgCost * files.length){
+               
+                    for (const file of files){
+                        const img_ext = path.parse(file.path).ext
+                        const file_path = './' + datasetDir + '/' + file.path;
+                        //check if the ext of the file is the same as the dataset
+                        if(img_ext.replace('.','') === req.params.datasetFormat){
+                            
+                            const bbox_img = value?.find((elem:any) => elem.img === file.path)?.bbox
+                            let img;
+                            
+                            if(bbox_img && bbox_img.length === 4){
+                                img = await Image.create({
+                                    bbox: bbox_img,
+                                    datasetID: req.params.datasetId
+                                });
                             }else{
-                                //bisogna rimuovere l'immagine
-                               counterWrongImage += 1;
+                                img = await Image.create({
+                                    datasetID: req.params.datasetId
+                                });
                             }
-                        });//end forEach
-
-                        //eliminare lo zip
+             
+                            let file_id = img.get('file_id');
+                            const zeroPad = (num: number, places:number) => String(num).padStart(places, '0')
+                            file_id = zeroPad(file_id as number,12);
+    
+                            const file_newName = './' + datasetDir + '/' + file_id + img_ext;
+                            await fs.rename(file_path, file_newName)
+    
+                            uuidList.push(img.getDataValue('uuid') as string)
                         
-                        successHandler(res.append('Warning', counterWrongImage + " images not uploaded"), uuidList , StatusCodes.CREATED);
-                    }else{
-                        throw new NotEnoughCredits();
-                    }
+                        }else{
+                            //Removing wrong image
+                            wrongImages.push(path.parse(file_path).base);
+                            await fs.unlink(file_path);
+                            counterWrongImage += 1;
+                        }
+                    };//end for
+
+                     //Scalare i crediti dell'utente
+                    const user = await User.findOne({
+                        where : {id : req.params.jwtUserId}
+                    }).then((u) =>{
+                        const cost : number = DatasetsController.imgCost * (files.length - counterWrongImage)
+                        u?.decrement({ credit : cost.toFixed(2)});
+                        u?.save();
+                        const jsonMessage = {
+                            "images_uuid": uuidList,
+                            "number_invalid_images": counterWrongImage,
+                            "invalid_images":wrongImages
+                        }
+                        successHandler(res, jsonMessage , StatusCodes.CREATED);
+                    })  
+                    await fs.unlink(req.file.path);
+        
+                }else{
+                    throw new NotEnoughCredits();
+                }
                     
-                })
-                .catch((err) => {
-                    next(err)
-                });
+            }else{
+                throw new FileNotFoundError();
             }
-
-
         }catch(error){
             next(error)
         }
     }
-
 }
 
 export default DatasetsController;

@@ -6,8 +6,6 @@ import DatasetsRouter from './routes/datasets';
 import UsersRouter from './routes/users';
 import ModelRouter from './routes/model';
 import InferenceRouter from './routes/inference';
-var multer = require('multer');
-var upload = multer();
 
 
 const app = express();
@@ -21,9 +19,6 @@ app.use((request: Request, response: Response, next: NextFunction) => {
     response.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
     next()
 })
-
-app.use(upload.array());
-app.use(express.static('public'));
 
 
 app.use(UsersRouter);
