@@ -144,7 +144,7 @@ class DatasetsController{
             */
             const sameNameDat = await Dataset.findOne({
                 where : { 
-                    [Op.and]: [{ userID : req.params.jwtUserId }, { 'name': value.name }] }
+                    [Op.and]: [{ userID : req.params.datasetOwner }, { 'name': value.name }] }
             })
 
              //If there isn't a dataset with that name, it's updated with info

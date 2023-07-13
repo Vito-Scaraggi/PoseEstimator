@@ -1,5 +1,5 @@
 import {Request, Response, NextFunction} from 'express';
-import jwt  from 'jsonwebtoken';
+import jwt, { JsonWebTokenError }  from 'jsonwebtoken';
 import { z } from 'zod';
 import multer from 'multer';
 import path  from "path";
@@ -58,16 +58,37 @@ class Middleware{
                 // decode token with secret key
                 const decoded : any = jwt.verify(token.toString(), Middleware.secret);
                 // enrich request params with user id
-                req.params.jwtUserId = decoded.id;
-                const user = await User.findByPk(req.params.jwtUserId);
-                // check if user exists
-                if (user){
-                    // enrich request params with admin flag and owned credit
-                    req.params.isAdmin = user.getDataValue("admin");
-                    req.params.credit = user.getDataValue("credit");
-                    next();
+                req.params.jwtUserId = String(decoded.id).valueOf();
+                const authUser = await User.findByPk(req.params.jwtUserId);
+                
+                let user = null;
+
+                if(!req.params.userId){
+                    req.params.userId = req.params.jwtUserId;
+                    user = authUser;
                 }
-                else throw new UserNotFound();
+                else{
+                    const schema = z.coerce.number({ invalid_type_error : "user id must be a number"})
+                            .int({ message : "user id must be a integer"});
+                    schema.parse(req.params.userId);
+                    user = await User.findByPk(req.params.userId);
+                }
+                
+                if (authUser){
+                    if (user){
+                        req.params.isAdmin = authUser.getDataValue("admin");
+                        // admin can access all accounts, normal user can access only his own
+                        if(req.params.jwtUserId === req.params.userId || Boolean(req.params.isAdmin).valueOf()){
+                            // enrich request params with admin flag and owned credit
+                            req.params.credit = user.getDataValue("credit");
+                            next();
+                        }
+                        else
+                            throw new MismatchedUser();
+                    }
+                    else throw new UserNotFound();
+                }
+                else throw new JsonWebTokenError("invalid jwt");
             }
             else{
                 throw new MissingToken();
@@ -78,7 +99,7 @@ class Middleware{
        }
     }
 
-    // check if user is dataset's owner
+    // check if user is dataset's owner or admin
     static async checkDatasetOwner ( req : Request, res : Response, next : NextFunction ) {
         try{
 
@@ -91,10 +112,11 @@ class Middleware{
 
             // check if dataset exists
             if (dataset){
-                let datasetOwner = dataset.getDataValue("userID");
+                let datasetOwner = String(dataset.getDataValue("userID")).valueOf();
                 // check if dataset owner and user matches
-                if (datasetOwner === req.params.jwtUserId){
-                    // enrich request params with dataset name and image format
+                if (datasetOwner === req.params.jwtUserId || Boolean(req.params.isAdmin).valueOf()){
+                    // enrich request params with dataset owner, name and image format
+                    req.params.datasetOwner = datasetOwner; // modify dataset routes?
                     req.params.datasetName = dataset.getDataValue("name");
                     req.params.datasetFormat = dataset.getDataValue("format");
                     next();
@@ -111,24 +133,10 @@ class Middleware{
         }
     }
 
-    /*
-    static checkAccountOwner ( req : Request, res : Response, next : NextFunction ) {
-        try{
-            if(req.params.jwtUserId === req.params.userId)
-                next();
-            else
-                throw new MismatchedUser();
-        }
-        catch(err){
-            next(err);
-        }
-    }
-    */
-
     // check if user is admin
     static async checkAdmin  ( req : Request, res : Response, next : NextFunction ) {
         try {
-            if(Boolean(req.params.isAdmin).valueOf() === true)
+            if(Boolean(req.params.isAdmin).valueOf())
                 next();
             else 
                 throw new RestrictedToAdmin();
@@ -211,13 +219,6 @@ class MiddlewareBuilder{
         this.middlewares.push(Middleware.checkAuth);
         return this;
     }
-
-    /*
-    addAccountOwnership(){
-        this.middlewares.push(Middleware.checkAccountOwner);
-        return this;
-    }
-    */
 
     // add dataset ownership middleware
     addDatasetOwnership(){
