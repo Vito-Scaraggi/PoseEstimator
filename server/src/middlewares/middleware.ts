@@ -12,25 +12,23 @@ import { MissingToken, MismatchedUser, RestrictedToAdmin, MismatchedDatasetOwner
 import User from '../models/user';
 import Dataset from '../models/dataset';
 
-//0 = immagini, 1 = zip
+//get the extension in regex
 let getRegexFormats = function(formatMode: number){
    switch(formatMode){
         case 0:
             return /jpeg|jpg|png/;
-        break;
         case 1: 
             return /zip/;
-        break;
         default:
             return /jpeg|jpg|png/;
    }
 }
 
+//Extension and mimetype checker for multer
 const checkFileType = function (file: any, formatMode: number, cb: any) {
     
     //Estensioni permesse
     const fileTypes = getRegexFormats(formatMode);
-
     
     //check delle estensioni
     const extName = fileTypes.test(path.extname(file.originalname).toLowerCase());
@@ -42,23 +40,7 @@ const checkFileType = function (file: any, formatMode: number, cb: any) {
         cb(new FileFormatError());
     }
 };
-/*
-const checkFileTypeZip = function (file: any, cb: any) {
-    
-    //Estensioni permesse
-    const fileTypes = getRegexFormats(1);
 
-    //check delle estensioni
-    const extName = fileTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimeType = fileTypes.test(file.mimetype);
-    
-    if (mimeType && extName) {
-        return cb(null, true);
-    } else {
-        cb(new FileFormatError());
-    }
-};
-*/
 
 
 // class that provides static middleware methods
@@ -164,18 +146,22 @@ class Middleware{
         res.status(response.status).json(response.message);
     };
 
-    static getUpload(fileFormat: number){
+    //allow getting files 
+    static getUpload(fileFormat: number){ //0 = images, 1 = zip
         return async (req : Request, res : Response, next : NextFunction) => {
             try{
-                const datasetDir = './images/' + req.params.datasetName
+                //if doesn't exist, create the folder of the dataset
+                const datasetDir = './images/' + req.params.datasetId
                 await fs.mkdir(datasetDir,{recursive: true})
 
+                //multer property to specify the folder where to save the files and how should they be renamed
                 const storageEngine = multer.diskStorage({
                     destination: (req, file, cb) => {
                             cb(null, datasetDir);
                         },
                     
                     filename: (req, file, cb) => {
+                        //temporary filename to ensure the user can upload a file with the same name as the ones stored in the folder
                         const fileName = 'tmp--' + Date.now() + randomBytes(16).toString(`hex`) + `${file.originalname}`;
                         cb(null, fileName);
                     },
@@ -185,8 +171,10 @@ class Middleware{
                 const upload = multer({
                     storage: storageEngine,
                     fileFilter: (req, file, cb) => {checkFileType(file, fileFormat, cb);},
+                    
                 });
             
+                //getting a single file and making it available in the req
                 upload.single('file')(req,res, next);
 
             }catch(error){
@@ -195,37 +183,6 @@ class Middleware{
         };
     }
 
-/*
-    static async getUploadZip(req : Request, res : Response, next : NextFunction) {
-        try{
-            const datasetDir = './images/' + req.params.datasetName
-            await fs.mkdir(datasetDir,{recursive: true})
-
-            const storageEngine = multer.diskStorage({
-                destination: (req, file, cb) => {
-                        cb(null, datasetDir);
-                    },
-                
-                filename: (req, file, cb) => {
-                    const fileName = 'tmp--' + Date.now() + randomBytes(16).toString(`hex`) + `${file.originalname}`;
-                    cb(null, fileName);
-                },
-                
-                
-            });
-            
-            const upload = multer({
-                storage: storageEngine,
-                fileFilter: (req, file, cb) => {checkFileTypeZip(file ,cb);},
-            });
-        
-           upload.single('file')(req,res,next)
-
-        }catch(error){
-            next(error);
-        }
-    };
-    */
 }
 
 // builder class to create lists of middleware functions

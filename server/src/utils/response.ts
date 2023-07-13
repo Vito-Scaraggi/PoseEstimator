@@ -110,6 +110,9 @@ class ResponseFactory{
 			case "ExtensionNotMatched":
 				ret = new Response(StatusCodes.BAD_REQUEST, err.message);
 			break;
+			case "NameAlreadyExists":
+				ret = new Response(StatusCodes.BAD_REQUEST, err.message);
+			break;
 			// default status code is INTERNAL SERVER ERROR
 			default:
 				console.log(err.constructor.name, err.stack);

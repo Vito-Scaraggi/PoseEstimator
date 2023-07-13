@@ -29,7 +29,7 @@ ALTER TABLE IF EXISTS public."user"
 CREATE TABLE IF NOT EXISTS public.dataset
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    name text COLLATE pg_catalog."default" NOT NULL UNIQUE,
+    name text COLLATE pg_catalog."default" NOT NULL,
     tags text[] COLLATE pg_catalog."default",
     format text COLLATE pg_catalog."default" DEFAULT 'png',
     "userID" integer NOT NULL,

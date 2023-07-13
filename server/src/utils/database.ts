@@ -1,16 +1,15 @@
-// Importazione del modulo Sequelize
 import { Sequelize } from "sequelize"
 
-// Creazione di un'istanza di Sequelize per la connessione al database
+// Creating sequelize instance for the connection to the databse
 const sequelize = new Sequelize(
-    process.env.POSTGRES_DB || "",  // Nome del database
-    process.env.POSTGRES_USER || "",      // Nome utente del database
-    process.env.POSTGRES_PASSWORD || "",  // Password del database
+    process.env.POSTGRES_DB || "",  // Name of the databse
+    process.env.POSTGRES_USER || "",      // Username for the database
+    process.env.POSTGRES_PASSWORD || "",  // Password for the database
     {
-        host: process.env.DB_HOST, // Host del database
-        dialect: "postgres",       // Utilizzo del dialetto PostgreSQL
+        host: process.env.DB_HOST, // Host of the database
+        dialect: "postgres",       // Using PostgreSQL Dialect
     }  
     
 )
 
-export default sequelize // Esportazione dell'istanza di Sequelize per l'uso in altri moduli
+export default sequelize // Exporting sequelize instance

@@ -51,19 +51,19 @@ export class ModelNotFound extends Error{
 }
 
 export class DatasetNotValid extends Error{
-	constructor(message = "Dataset is not valid"){
+	constructor(message = "dataset is not valid"){
 		super(message);
 	}
 }
 
 export class InvalidFile extends Error{
-	constructor(message = "File is not valid"){
+	constructor(message = "file is not valid"){
 		super(message);
 	}
 }
 
 export class FileNotFoundError extends Error{
-	constructor(message = "File not found"){
+	constructor(message = "file not found"){
 		super(message);
 	}
 }
@@ -74,14 +74,20 @@ export class EmailAlreadyExists extends Error{
 	}
 }
 
+export class NameAlreadyExists extends Error{
+	constructor(message = "name already exists"){
+		super(message);
+	}
+}
+
 export class NotEnoughCredits extends Error{
-	constructor(message = "Not enough credits to complete the action"){
+	constructor(message = "not enough credits to complete the action"){
 		super(message);
 	}
 }
 
 export class BboxSyntaxError extends Error{
-	constructor(message = "The bbox must have 4 values"){
+	constructor(message = "the bbox must have 4 values"){
 		super(message);
 	}
 }
@@ -93,7 +99,7 @@ export class FileFormatError extends Error{
 }
 
 export class ExtensionNotMatched extends Error{
-	constructor(message = "Extensions not matching between image and dataset"){
+	constructor(message = "extensions not matching between image and dataset"){
 		super(message);
 	}
 }
