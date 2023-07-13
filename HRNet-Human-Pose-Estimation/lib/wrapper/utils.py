@@ -1,6 +1,7 @@
 import json
 import os
 
+# read inference results from file and return them
 def get_results(inf_id, model_name, dataset_name):
 
     in_path = f"output/babypose/{model_name}/base/results/keypoints_{dataset_name}_results_{inf_id}.json"
@@ -31,6 +32,7 @@ def get_results(inf_id, model_name, dataset_name):
             )
     return ret
 
+# write bounding boxes needed for inference to a file
 def write_bbox(inf_id, bboxes):
     default_bbox = [220, 65, 200, 350]
 
