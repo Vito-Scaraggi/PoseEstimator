@@ -1,9 +1,9 @@
 import Dataset from "../models/dataset";
 import { Request, Response, NextFunction } from 'express'
 import { StatusCodes } from "http-status-codes";
-import { nullable, z } from 'zod'
-import { BboxSyntaxError, DatasetNotFound, ExtensionNotMatched, FileNotFoundError, NameAlreadyExists, NotEnoughCredits } from "../utils/exceptions";
-import { where, Op } from "sequelize";
+import { z } from 'zod'
+import { DatasetFormatError, DatasetNotFound, ExtensionNotMatched, FileNotFoundError, NameAlreadyExists, NotEnoughCredits } from "../utils/exceptions";
+import { Model, Op } from "sequelize";
 import { successHandler } from "../utils/response";
 import fs from 'fs-extra'
 import path from 'path';
@@ -18,11 +18,10 @@ const createDatasetSchema = z.object({
             .min(1, {message:"name must be 1 or more characters long"})
             .max(30, {message: "name can't be more than 30 characters long"}),
     tags: z.array(
-            z.string())
+            z.string(),
+            {invalid_type_error:"tags must be an array"})
             .optional(),
-    format: z.string()
-            .min(1,{message:"format must be 1 or more characters long"})
-            .max(4,{message: "format can't be more than 4 characters long"})
+    format: z.enum(["png","jpg","jpeg"],{errorMap: (issue, ctx) => ({ message: "formats accepted are png, jpg and jpeg" }) })
             .optional()
 });
 
@@ -71,24 +70,33 @@ class DatasetsController{
     
     //return all datasets owned by logged user
     static async getAll(req : Request, res : Response, next: NextFunction): Promise<void>{
-        
-            await Dataset.findAll({
-                where : { userID : req.params.jwtUserId}
-            })
-            .then((datasets) => {
-                if(datasets.length !== 0){
-                    successHandler(res, datasets);
-                }else{
-                    throw new DatasetNotFound();
-                }
-            }).catch((err) => next(err))
+        try{
+            let datasets
+
+            //if user is admin get all the datasets
+            if(Boolean(req.params.isAdmin).valueOf()){
+                datasets =  await Dataset.findAll()
+            }else{
+                //otherwise get only the current user's datasets
+                datasets =  await Dataset.findAll({
+                    where : { userID : req.params.jwtUserId}
+                })
+            }
+            if(datasets.length !== 0){
+                successHandler(res, datasets);
+            }else{
+                throw new DatasetNotFound();
+            }
+        }catch(error){
+            next(error)
+        }   
     }
 
     //create new dataset with the provided info
     static async create(req : Request, res : Response, next: NextFunction): Promise<void>{
         try{
             //validate dataset info
-            const value = createDatasetSchema.parse(req.body);
+            let value = createDatasetSchema.parse(req.body);
             
             /*
                 search for a dataset owned by the user 
@@ -101,12 +109,9 @@ class DatasetsController{
 
             //If there isn't a dataset with that name, it's created in the database
             if(!sameNameDat){
-                const dataset = await Dataset.create({
-                    name: value.name,
-                    tags: value.tags || [],
-                    format: value.format || "png",
-                    userID: req.params.jwtUserId
-                })
+                let newUser = JSON.parse(JSON.stringify(value))
+                newUser.userID = req.params.jwtUserId
+                const dataset =  await Dataset.create(newUser)
                 successHandler(res, dataset, StatusCodes.CREATED);
             }else{
                 //if there is already a dataset with that name, throw error
@@ -144,22 +149,33 @@ class DatasetsController{
             */
             const sameNameDat = await Dataset.findOne({
                 where : { 
-                    [Op.and]: [{ userID : req.params.jwtUserId }, { 'name': value.name || ''}] }
+                    [Op.and]: [{ userID : req.params.datasetOwner }, { 'name': value.name || null}] }
             })
 
-             //If there isn't a dataset with that name, it's updated with info
-            if(!sameNameDat){
-                dat?.update({
-                    name: value.name || dat.get('name'),
-                    tags: value.tags || dat.get('tags'),
-                    format: value.format || dat.get('format'),
-                });
+            const flagFormat = await Image.findOne({
+                where: {
+                    datasetID : req.params.datasetId
+                }
+            })
 
+            /*
+                If at least in image has been already uploaded in the dataset
+                it's not possible to change dataset's format, otherwise inference
+                would throw an error
+            */
+            if(flagFormat && value.format !== dat?.get("format")){
+                throw new DatasetFormatError()
+            }
+           
+             //If there isn't a dataset with that name, it's updated with info
+            if(!sameNameDat || sameNameDat.get("id") === Number(req.params.datasetId).valueOf()){
+               
+                dat?.update(value)
+                successHandler(res, dat, StatusCodes.CREATED);
             }else{
                 //if there is already a dataset with that name, throw error
                 throw new NameAlreadyExists();
             }
-            successHandler(res, dat, StatusCodes.CREATED);
         }catch(error){
             return next(error);
         }

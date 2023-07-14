@@ -13,7 +13,7 @@ import User from '../models/user';
 import Dataset from '../models/dataset';
 
 //get the extension in regex
-let getRegexFormats = function(formatMode: number){
+const getRegexFormats = function(formatMode: number){
    switch(formatMode){
         case 0:
             return /jpeg|jpg|png/;

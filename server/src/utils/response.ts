@@ -101,10 +101,10 @@ class ResponseFactory{
 			case "NotEnoughCredits":
 				ret = new Response(StatusCodes.UNAUTHORIZED, err.message);
 			break;
-			case "BboxSyntaxError":
+			case "FileFormatError":
 				ret = new Response(StatusCodes.BAD_REQUEST, err.message);
 			break;
-			case "FileFormatError":
+			case "DatasetFormatError":
 				ret = new Response(StatusCodes.BAD_REQUEST, err.message);
 			break;
 			case "ExtensionNotMatched":

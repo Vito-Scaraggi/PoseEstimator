@@ -86,14 +86,14 @@ export class NotEnoughCredits extends Error{
 	}
 }
 
-export class BboxSyntaxError extends Error{
-	constructor(message = "the bbox must have 4 values"){
+export class FileFormatError extends Error{
+	constructor(message = "the format of the file is not accepted"){
 		super(message);
 	}
 }
 
-export class FileFormatError extends Error{
-	constructor(message = "the format of the file is not accepted"){
+export class DatasetFormatError extends Error{
+	constructor(message = "cannot change dataset format, already an image uploaded"){
 		super(message);
 	}
 }
