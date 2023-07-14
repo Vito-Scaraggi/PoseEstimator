@@ -56,7 +56,7 @@ class UsersController{
     // return user with given id hiding salt
     static async getById(req : Request, res : Response, next : NextFunction) : Promise <void>{
         
-        await User.findByPk( req.params.jwtUserId, { attributes : { exclude : ['salt']}}).then( (data) => {
+        await User.findByPk( req.params.userId, { attributes : { exclude : ['salt']}}).then( (data) => {
             successHandler(res, data);
          })
          .catch( (err) => next(err));
@@ -77,7 +77,7 @@ class UsersController{
             }
             
             // update user row into db
-            await User.update(user, {where : { id : req.params.jwtUserId}})
+            await User.update(user, {where : { id : req.params.userId}})
                     .catch((err) => {
                     // email not unique error
                     if (err.constructor.name === "UniqueConstraintError")
@@ -86,7 +86,7 @@ class UsersController{
                         throw err;
             });
             
-            const updatedUser = await User.findByPk(req.params.jwtUserId, { attributes : { exclude : ['salt']}} ); 
+            const updatedUser = await User.findByPk(req.params.userId, { attributes : { exclude : ['salt']}} ); 
             successHandler(res, updatedUser);
         }
         catch(err){
@@ -127,8 +127,8 @@ class UsersController{
     // delete user with given id
     static async deleteById(req : Request, res : Response, next : NextFunction) : Promise <void>{
         try{
-            const user = await User.findByPk(req.params.jwtUserId, { attributes : { exclude : ['salt']}} );
-            await User.destroy({where : { id : req.params.jwtUserId}})
+            const user = await User.findByPk(req.params.userId, { attributes : { exclude : ['salt']}} );
+            await User.destroy({where : { id : req.params.userId}})
             .then( () => successHandler(res, user) );
         }
         catch(err){

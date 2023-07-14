@@ -13,6 +13,6 @@ InferenceRouter.get('/model/:modelId/inference/:datasetId', authMW.copy()
                                                             .addDatasetOwnership()
                                                             .build(C.startInference))
                 .get('/status/:jobId', authMW.copy()
-                                            .build(C.getStatus));
+                                        .build(C.getStatus));
 
 export default InferenceRouter;

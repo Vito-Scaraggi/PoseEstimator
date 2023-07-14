@@ -76,6 +76,7 @@ class InferenceController {
                         throw new InferenceError(result.error);
                 else {
                     if (billed){
+                        // billing to authenticated user
                         const user = await User.findByPk(req.params.jwtUserId);    
                         user?.decrement({ credit : InferenceController.infCost});
                         await user?.save();
