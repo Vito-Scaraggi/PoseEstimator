@@ -151,7 +151,7 @@ class Middleware{
         return async (req : Request, res : Response, next : NextFunction) => {
             try{
                 //if doesn't exist, create the folder of the dataset
-                const datasetDir = './images/' + req.params.datasetId
+                const datasetDir = './images/dataset' + req.params.datasetId
                 await fs.mkdir(datasetDir,{recursive: true})
 
                 //multer property to specify the folder where to save the files and how should they be renamed

@@ -62,7 +62,7 @@ class InferenceController {
                 data["billed"] = billed;
 
                 // setting dataset folder name
-                const datasetName = req.params.datasetId
+                const datasetName = 'dataset' + req.params.datasetId 
                 
                 /*  send inference request to proxy
                     if billed = false request will be sent

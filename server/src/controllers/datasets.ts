@@ -1,7 +1,7 @@
 import Dataset from "../models/dataset";
 import { Request, Response, NextFunction } from 'express'
 import { StatusCodes } from "http-status-codes";
-import { z } from 'zod'
+import { nullable, z } from 'zod'
 import { BboxSyntaxError, DatasetNotFound, ExtensionNotMatched, FileNotFoundError, NameAlreadyExists, NotEnoughCredits } from "../utils/exceptions";
 import { where, Op } from "sequelize";
 import { successHandler } from "../utils/response";
@@ -70,13 +70,13 @@ class DatasetsController{
     }
     
     //return all datasets owned by logged user
-    static async getAll(req : Request, res : Response, next: NextFunction){
+    static async getAll(req : Request, res : Response, next: NextFunction): Promise<void>{
         
             await Dataset.findAll({
                 where : { userID : req.params.jwtUserId}
             })
             .then((datasets) => {
-                if(datasets){
+                if(datasets.length !== 0){
                     successHandler(res, datasets);
                 }else{
                     throw new DatasetNotFound();
@@ -85,7 +85,7 @@ class DatasetsController{
     }
 
     //create new dataset with the provided info
-    static async create(req : Request, res : Response, next: NextFunction){
+    static async create(req : Request, res : Response, next: NextFunction): Promise<void>{
         try{
             //validate dataset info
             const value = createDatasetSchema.parse(req.body);
@@ -104,7 +104,7 @@ class DatasetsController{
                 const dataset = await Dataset.create({
                     name: value.name,
                     tags: value.tags || [],
-                    format: value.format,
+                    format: value.format || "png",
                     userID: req.params.jwtUserId
                 })
                 successHandler(res, dataset, StatusCodes.CREATED);
@@ -119,7 +119,7 @@ class DatasetsController{
     }
 
     //delete user with given id
-    static async delete(req : Request, res : Response, next: NextFunction){
+    static async delete(req : Request, res : Response, next: NextFunction): Promise<void>{
         try{
             const datasetToDelete =  await Dataset.findByPk(req.params.datasetId);
             await datasetToDelete?.destroy().then(
@@ -131,7 +131,7 @@ class DatasetsController{
     }
 
     // update dataset with given id
-    static async updateById(req : Request, res : Response, next: NextFunction){
+    static async updateById(req : Request, res : Response, next: NextFunction): Promise<void>{
         try{
 
             // find the dataset and validate dataset info
@@ -144,15 +144,15 @@ class DatasetsController{
             */
             const sameNameDat = await Dataset.findOne({
                 where : { 
-                    [Op.and]: [{ userID : req.params.jwtUserId }, { 'name': value.name }] }
+                    [Op.and]: [{ userID : req.params.jwtUserId }, { 'name': value.name || ''}] }
             })
 
              //If there isn't a dataset with that name, it's updated with info
             if(!sameNameDat){
                 dat?.update({
-                    name: value.name,
-                    tags: value.tags || [],
-                    format: value.format,
+                    name: value.name || dat.get('name'),
+                    tags: value.tags || dat.get('tags'),
+                    format: value.format || dat.get('format'),
                 });
 
             }else{
@@ -166,13 +166,13 @@ class DatasetsController{
     }
 
     // insert image in specified dataset by id
-    static async insertImg(req : Request, res : Response, next: NextFunction){
+    static async insertImg(req : Request, res : Response, next: NextFunction): Promise<void>{
         try{
             // if there is a file
             if(req.file){
 
                 // validate info of bbox
-                const value = insertImageSchema.parse(JSON.parse(req.body["info"]))
+                const value =  req.body["info"] ? insertImageSchema.parse(JSON.parse(req.body["info"])) : null
 
                 // credits of the user
                 const ownedCredits = Number(req.params.credit).valueOf();
@@ -185,28 +185,25 @@ class DatasetsController{
                     // if the user has enough credits
                     if (ownedCredits >= DatasetsController.imgCost){
                     
-                        let IMAGE;
+                        let img;
                         
                         // if no bbox is specified, it will be used the default one
-                        if(!value.bbox){
-                            IMAGE = await Image.create({
+                        if(value?.bbox && value.bbox.length === 4){
+
+                            //create image in the db with bbox
+                            img = await Image.create({
+                                bbox: value.bbox,
                                 datasetID: req.params.datasetId
                             });
                         }else{
-                            // if there is a bbox and has all 4 values
-                            if(value.bbox.length === 4){
-                                // image created in the database with specified bbox
-                                IMAGE = await Image.create({
-                                    bbox: value.bbox,
-                                    datasetID: req.params.datasetId
-                                });
-                            }else{
-                                throw new BboxSyntaxError();
-                            }
+                            //create the image in the db with default bbox
+                            img = await Image.create({
+                                datasetID: req.params.datasetId
+                            });
                         }
 
                         // autogenerated numerical id of the file
-                        let file_id = IMAGE.get('file_id');
+                        let file_id = img.get('file_id');
 
                         /*
                             create the name of the file as a 12 characters name as:
@@ -228,7 +225,7 @@ class DatasetsController{
 
                         // message to return
                         const jsonMessage = {
-                            "image_uuid": IMAGE.get('uuid')
+                            "image_uuid": img.get('uuid')
                         }
                         successHandler(res, jsonMessage, StatusCodes.CREATED);
                     }else{
@@ -246,13 +243,13 @@ class DatasetsController{
     }
 
     // insert zip in specified dataset by id
-    static async insertZip(req : Request, res : Response, next: NextFunction){
+    static async insertZip(req : Request, res : Response, next: NextFunction): Promise<void>{
         try{
             //if there is a file
             if(req.file){
 
                 // validate info
-                const value = insertZipSchema.parse(JSON.parse(req.body["info"]))
+                const value = req.body["info"] ? insertZipSchema.parse(JSON.parse(req.body["info"])) : null
 
                 // user's credits
                 const ownedCredits = Number(req.params.credit).valueOf();
