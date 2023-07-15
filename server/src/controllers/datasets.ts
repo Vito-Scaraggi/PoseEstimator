@@ -330,10 +330,11 @@ class DatasetsController{
                             uuidList.push(img.getDataValue('uuid') as string)
                         
                         }else{
-                            // removing wrong extension image
                             wrongImages.push(path.parse(file_path).base);
-                            await fs.unlink(file_path);
                             counterWrongImage += 1;
+
+                            // removing wrong extension image
+                            await fs.unlink(file_path);
                         }
                     };//end for
 
@@ -353,6 +354,7 @@ class DatasetsController{
                         }
                         successHandler(res, jsonMessage , StatusCodes.CREATED);
                     })  
+                    //removing zip file
                     await fs.unlink(req.file.path);
         
                 }else{

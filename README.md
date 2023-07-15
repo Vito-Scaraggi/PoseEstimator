@@ -23,6 +23,135 @@
 
 ### Pattern
 ### Diagrammi UML
+
+CREATE DATASET
+```mermaid
+
+sequenceDiagram
+autonumber
+actor User
+participant M as Middleware
+participant C as Dataset Controller
+participant P as Postgres
+
+User ->> M: POST /dataset
+activate M
+alt Error 401
+M -->> User: Unauthorized
+else Error 403
+M -->> User: Forbidden
+end
+M ->> C: Request
+activate C
+
+C -->> M: Throw exception
+M-->> User: 400 - Bad request
+C ->> P: Create Dataset
+activate P
+
+alt 201 Created
+P -->> C: Return Dataset
+C -->> M: Return Dataset
+M -->> User: Return Dataset Info
+else Error 500
+P -->> C: Database Error
+deactivate P
+C -->> M: Throw exception
+deactivate C
+M -->> User: Internal Server Error
+deactivate M
+end
+```
+
+INSERT ZIP
+```mermaid
+
+sequenceDiagram
+autonumber
+actor User
+participant M as Middleware
+participant C as Dataset Controller
+participant P as Postgres
+
+User ->> M: POST /dataset/:datasetId/zip
+activate M
+alt Error 401
+M -->> User:  Unauthorized 
+else Error 403
+M -->> User: Forbidden
+else Error 404
+M -->> User: Not Found 
+end
+
+M ->> C: Request
+activate C
+
+C -->> M: Throw exception
+alt Error 400
+    M-->> User: Bad request
+  else Error 404
+   
+   M-->> User: File Not Found
+  end
+
+
+C ->> C: Decompress Zip
+
+loop Every image
+
+  C ->> P: Create Image
+  activate P
+  alt is fine
+    P -->> C: Return Image
+  else Error
+    P -->> C: Database error
+  end
+  deactivate P
+end
+
+alt 201 Created
+    C -->> M: Return Image
+      M -->> User: Return Upload Info
+else Error 500
+   C -->> M: Throw exception
+     M -->> User: Internal Server Error
+end
+deactivate C
+
+deactivate M
+```
+
+LOGIN
+```mermaid
+
+sequenceDiagram
+autonumber
+actor User
+participant M as Middleware
+participant C as User Controller
+participant P as Postgres
+
+User ->> M: POST /user/login
+activate M
+M ->> C: login
+activate C
+C ->> P: Get user
+activate P
+alt is fine
+P -->> C: Return User
+else Error
+P -->> C: Database error
+end
+C ->> C: Authenticate User
+alt 200 OK
+C -->> M: Return JWT Token
+M -->> User: Return JWT Token
+else Error 401
+C -->> M: Throw exception
+M -->> User: Unauthorized
+end
+```
+
 ## API
 ## Quick start
 Per utilizzare l'applicazione segui i seguenti step:
