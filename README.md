@@ -324,6 +324,33 @@ end
 
 ## API
 
+###Get all Datasets
+Route:
+```
+GET /dataset/all
+```
+Authorization:
+```
+token
+```
+Response:
+```
+
+```
+
+****
+Route:
+```
+GET /dataset/all
+```
+Authorization:
+```
+
+```
+Response:
+```
+
+```
 ## Quick start
 Per utilizzare l'applicazione segui i seguenti step:
 
