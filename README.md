@@ -24,7 +24,7 @@
 ### Pattern
 ### Diagrammi UML
 
-CREATE DATASET
+Sequence diagram per la creazione di un dataset
 ```mermaid
 
 sequenceDiagram
@@ -63,7 +63,7 @@ deactivate M
 end
 ```
 
-INSERT ZIP
+Sequence diagram per l'inserimento di un file zip in un dataset
 ```mermaid
 
 sequenceDiagram
@@ -111,17 +111,16 @@ end
 
 alt 201 Created
     C -->> M: Return Image
-      M -->> User: Return Upload Info
+    M -->> User: Return Upload Info
 else Error 500
    C -->> M: Throw exception
-     M -->> User: Internal Server Error
+   deactivate C
+   M -->> User: Internal Server Error
 end
-deactivate C
-
 deactivate M
 ```
 
-LOGIN
+Sequence diagram per il login di un utente
 ```mermaid
 
 sequenceDiagram
@@ -141,6 +140,7 @@ alt is fine
 P -->> C: Return User
 else Error
 P -->> C: Database error
+deactivate P
 end
 C ->> C: Authenticate User
 alt 200 OK
@@ -148,7 +148,9 @@ C -->> M: Return JWT Token
 M -->> User: Return JWT Token
 else Error 401
 C -->> M: Throw exception
+deactivate C
 M -->> User: Unauthorized
+deactivate M
 end
 ```
 
