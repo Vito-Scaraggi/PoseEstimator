@@ -50,18 +50,6 @@ export class ModelNotFound extends Error{
 	}
 }
 
-export class DatasetNotValid extends Error{
-	constructor(message = "dataset is not valid"){
-		super(message);
-	}
-}
-
-export class InvalidFile extends Error{
-	constructor(message = "file is not valid"){
-		super(message);
-	}
-}
-
 export class FileNotFoundError extends Error{
 	constructor(message = "file not found"){
 		super(message);
