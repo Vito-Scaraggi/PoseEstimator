@@ -26,55 +26,14 @@
 ```
 Il diagramma rappresenta i servizi docker che compongono l'applicazione e le interazioni tra di essi. I nodi corrispondono a *container docker* orchestrati con l'utilizzo di *docker compose*. 
 
-L'utente richiama le API esposte dal *backend node.js*. L'interazione B2B (*backend to backend*) avviene tra il server in *node.js* e un server in *flask* che si occupa di inviare richieste di inferenza al modello *pytorch* di HRNet tramite il framework *celery*.
+L'utente richiama le API esposte dal *backend node.js*. L'interazione B2B (*backend to backend*) avviene tra il server in *node.js* e un server in *flask* che si occupa di inviare richieste di inferenza al modello *pytorch* di HRNet tramite il framework *celery* che si interfaccia con una coda *rabbitMQ*.
+
 ### Diagramma dei casi d'uso
 Il diagramma sottostante rappresenta il diagramma dei casi d'uso, cioè delle funzionalità disponibili agli utenti.
 ![progpa-Use case (2)](https://github.com/Vito-Scaraggi/PoseEstimator/assets/75072255/c4240c8a-bd45-425a-8dd0-b33dc3897202)
 
 ### Schema database 
 ![progpa-Class-Diagram](https://github.com/Vito-Scaraggi/PoseEstimator/assets/75072255/3028b687-b4c9-430f-a14d-9abbb96572f3)
-
-
-```mermaid
-erDiagram
-    user {
-        integer id PK
-        string name
-        string surname
-        string email UK
-        string password
-        string salt
-        decimal credit
-        boolean admin
-        timestamp createdAt
-        timestamp updatedAt
-    }
-    dataset {
-        integer id PK
-        string name 
-        string[] tags
-        string format
-        integer userID FK
-        timestamp createdAt
-        timestamp updatedAt
-    }
-    image {
-        uuid uuid PK
-        integer file_id UK
-        integer[] bbox
-        integer datasetID FK
-        timestamp createdAt
-        timestamp updatedAt
-    }
-    model {
-        integer id PK
-        string name UK
-        timestamp createdAt
-        timestamp updatedAt
-    }
-    user }o--|| dataset : has
-    dataset }o--|| image : contains
-```
 
 ### Pattern architetturale
 Il pattern architetturale scelto per il design dell'API è una variante del MVVM (*Model-View-ViewModel*), privato della componente *View* al fine realizzare un *backend* puro. L'MVVM prevede di incapsulare la *business logic* all'interno del *ViewModel*, mentre il *Model* costituisce soltanto il modello dei dati. L'applicazione implementa un *ViewModel* (*alias* Controller) per ogni funzionalità individuata in fase di progettazione e un *Model*, creato con il *framework* [Sequelize](https://sequelize.org/), per ogni tabella presente all'interno del database.
@@ -188,9 +147,9 @@ class ResponseFactory{
 ResponseFactory ..> Response
 ```
 #### Altri pattern
-Nell'implementazione sono stati utilizzati anche il pattern *DAO*, reso disponibile dal *framework* Sequelize, e il pattern *wrapper* per incapsulare il codice *pytorch* necessario per l'inferenza all'interno di una funzione *python* che ne "decora" il comportamento.
+Nell'implementazione sono stati utilizzati anche il pattern *DAO*, reso disponibile da *Sequelize*, il pattern *wrapper*, utile ad incapsulare il codice *pytorch* necessario per l'inferenza all'interno di una funzione *python* che ne "decora" il comportamento, e il pattern *publish/subscribe*, implementato con *celery* e *rabbitMQ*.
 
-### Diagrammi UML
+### Diagrammi di sequenza
 
 Sequence diagram per la creazione di un dataset
 ```mermaid
@@ -320,6 +279,167 @@ deactivate C
 M -->> User: Unauthorized
 deactivate M
 end
+```
+
+Sequence diagram per recuperare lo stato di un job
+```mermaid
+
+sequenceDiagram
+autonumber
+actor U as User<br><br>
+participant M as Middleware
+participant C as Inference Controller
+participant PR as Proxy
+participant F as flask publisher
+participant Q as rabbitMQ
+
+activate U
+activate M
+U ->> M: GET /status/:jobId
+M ->> M: checkAuth
+break auth failed
+M -->> M : throw exception
+M -->> U: 401 Unauthorized
+end
+activate C
+M ->> C: getStatus
+activate PR
+C ->> PR: status
+alt job cached with final state
+PR -->> C : return cached job status
+else job not cached with final state
+activate F
+PR ->> F : GET publisher:PORT/status/jobId
+activate Q
+F ->> Q : retrieve job status from queue
+Q -->> F : return job status or error
+deactivate Q
+F -->> PR : return job status or error
+deactivate F
+PR -->> C : return job status
+deactivate PR
+end
+break exception occurred
+C -->> M : throw or propagate exception
+deactivate C
+M -->> U : error HTTP response
+end
+M -->> U : return job status
+deactivate M
+deactivate U
+```
+
+Sequence diagram per avviare l'inferenza su un dataset
+```mermaid
+
+sequenceDiagram
+autonumber
+actor U as User<br><br>
+participant M as Middleware
+participant C as Inference Controller
+participant P as Postgres
+participant PR as Proxy
+participant F as flask publisher
+participant Q as rabbitMQ
+participant W as HRNet worker
+
+activate U
+activate M
+U ->> M: GET /status/:jobId
+M ->> M: checkAuth
+break auth failed
+M -->> M : throw exception
+M -->> U: 401 Unauthorized
+end
+M ->> M: checkDatasetOwner
+break dataset error
+M -->> M : throw exception
+M -->> U: error HTTP response
+end
+activate C
+M ->> C: startInference
+activate P
+C ->> P : retrieve model name
+P -->> C : return model name
+C ->> P: retrieve dataset images info
+P -->> C: return dataset images info
+deactivate P
+C ->> C : define request params and body
+activate PR
+C ->> PR: inference
+alt dataset is void
+PR -->> C : throw exception
+else dataset contains at least one image
+activate F
+PR ->> F : POST publisher:PORT/model/:model/inference/:dataset
+activate Q
+F ->> Q : send task
+activate W
+Q ->> W : notify task
+W -->> Q : ack
+W ->> W : do inference
+Q -->> F : return job id and state or error
+deactivate Q
+F -->> PR : return job id and state or error
+deactivate F
+PR -->> C : return job id and state
+deactivate PR
+end
+alt task was not sent in ABORTED mode
+  C --> C : bill user
+end
+break exception occurred
+C -->> M : throw or propagate exception
+deactivate C
+M -->> U : error HTTP response
+end
+M -->> U : return job status
+deactivate M
+deactivate U
+deactivate W
+```
+
+Sequence diagram per ricaricare il credito di un utente
+
+```mermaid
+
+sequenceDiagram
+autonumber
+actor U as User<br><br>
+participant M as Middleware
+participant C as User Controller
+participant P as Postgres
+
+activate U
+activate M
+U ->> M: POST /user/recharge
+M ->> M: checkAuth
+break auth failed
+M -->> M : throw exception
+M -->> U: 401 Unauthorized
+end
+M ->> M: checkAdmin
+break not admin
+M -->> M : throw exception
+M -->> U: 403 Forbidden
+end
+activate C
+M ->> C: rechargeByEmail
+activate P
+C ->> P: check if user with given email exists
+P -->> C: return user
+C ->> P: update user credits
+P -->> C: query done
+deactivate P
+C -->> M: return success message
+break exception occurred
+C -->> M : throw or propagate exception
+deactivate C
+M -->> U : error HTTP response
+end
+M -->> U : return success message
+deactivate M
+deactivate U
 ```
 
 ## API
