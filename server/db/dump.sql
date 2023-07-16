@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS public."user"
     email text COLLATE pg_catalog."default" NOT NULL UNIQUE,
     password text COLLATE pg_catalog."default" NOT NULL,
     "salt" text COLLATE pg_catalog."default" NOT NULL,
-    credit real NOT NULL DEFAULT 100,
+    credit numeric(11,2) NOT NULL DEFAULT 100,
     admin boolean NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP DEFAULT NULL,
     "updatedAt" TIMESTAMP DEFAULT NULL,

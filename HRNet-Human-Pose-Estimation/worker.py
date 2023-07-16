@@ -51,5 +51,12 @@ def inference(self, model, dataset, bboxes, img_format = 'png', billed = False):
 
 # entrypoint
 if __name__ == "__main__":
+    paths = ["log","output","data","data/babypose",
+            "data/babypose/images","data/babypose/person_detection_results"]
+    
+    for path in paths:
+        if not os.path.exists(path):
+            os.makedirs(path)
+
     args = ['worker']
     app.worker_main(argv=args)

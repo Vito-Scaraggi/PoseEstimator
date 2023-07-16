@@ -31,7 +31,7 @@ const User = sequelize.define("user", {
         allowNull: false,
     },
     credit: {
-        type: Sequelize.FLOAT,
+        type: Sequelize.DECIMAL(11,2),
         allowNull: false,
         defaultValue: process.env.DEFAULT_CREDITS || 500
     },
