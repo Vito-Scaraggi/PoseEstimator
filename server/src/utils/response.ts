@@ -30,6 +30,27 @@ class Response {
 // class that creates response objects
 class ResponseFactory{
 
+	// map status to list of errors
+	private static statusToErrors : { [key in StatusCodes]? : string[]} = 
+	{
+		[StatusCodes.UNAUTHORIZED] : ["MissingToken", "JsonWebTokenError", "TokenExpiredError", 
+			"NotBeforeError", "LoginFailed", "NotEnoughCredits"],
+		[StatusCodes.FORBIDDEN] : ["MismatchedUser", "MismatchedDatasetOwner", 
+			"RestrictedToAdmin"],
+		[StatusCodes.BAD_REQUEST] : ["FileFormatError", "DatasetFormatError", 
+			"NameAlreadyExists", "ExtensionNotMatched"],
+		[StatusCodes.NOT_FOUND] : ["DatasetNotFound", "FileNotFoundError",
+			"UserNotFound", "ModelNotFound"]
+	};
+
+	//get status for given error if defined
+	static getStatus(errorName : string){
+		return Object.entries(ResponseFactory.statusToErrors)
+		.map((item) => item[1].includes(errorName) ? 
+				Number(item[0]).valueOf() : undefined )
+		.reduce((acc, item) => acc? acc : item);
+	}
+
 	// parse Zod exception message to create
 	// more readable message
 
@@ -50,73 +71,21 @@ class ResponseFactory{
 		// depending on type of error thrown
 		
 		switch(err.constructor.name){
-			case "MissingToken":
-				ret = new Response(StatusCodes.UNAUTHORIZED, err.message);
-			break;
-			case "JsonWebTokenError":
-				ret = new Response(StatusCodes.UNAUTHORIZED, err.message);
-			break;
-			case "TokenExpiredError":
-				ret = new Response(StatusCodes.UNAUTHORIZED, err.message);
-			break;
-			case "NotBeforeError":
-				ret = new Response(StatusCodes.UNAUTHORIZED, err.message);
-			break;
-			case "LoginFailed":
-				ret = new Response(StatusCodes.UNAUTHORIZED, err.message);
-			break;
-			case "MismatchedUser":
-				ret = new Response(StatusCodes.FORBIDDEN, err.message);
-			break;
-			case "MismatchedDatasetOwner":
-				ret = new Response(StatusCodes.FORBIDDEN, err.message);
-			break;
-			case "RestrictedToAdmin":
-				ret = new Response(StatusCodes.FORBIDDEN, err.message);
-			break;
 			case "DatabaseError":
 				ret = new Response(StatusCodes.INTERNAL_SERVER_ERROR, "database error");
 			break;
 			case "ZodError":
 				ret = new Response(StatusCodes.BAD_REQUEST, ResponseFactory.parseZod(err.message));
 			break;
-			case "DatasetNotValid":
-				ret = new Response(StatusCodes.BAD_REQUEST, err.message);
-			break;
-			case "DatasetNotFound":
-				ret = new Response(StatusCodes.NOT_FOUND, err.message);
-			break;
-			case "InvalidFile":
-				ret = new Response(StatusCodes.BAD_REQUEST, err.message);
-			break;
-			case "FileNotFoundError":
-				ret = new Response(StatusCodes.NOT_FOUND, err.message);
-			break;
-			case "UserNotFound":
-				ret = new Response(StatusCodes.NOT_FOUND, err.message);
-			break;
-			case "ModelNotFound":
-				ret = new Response(StatusCodes.NOT_FOUND, err.message);
-			break;
-			case "NotEnoughCredits":
-				ret = new Response(StatusCodes.UNAUTHORIZED, err.message);
-			break;
-			case "FileFormatError":
-				ret = new Response(StatusCodes.BAD_REQUEST, err.message);
-			break;
-			case "DatasetFormatError":
-				ret = new Response(StatusCodes.BAD_REQUEST, err.message);
-			break;
-			case "ExtensionNotMatched":
-				ret = new Response(StatusCodes.BAD_REQUEST, err.message);
-			break;
-			case "NameAlreadyExists":
-				ret = new Response(StatusCodes.BAD_REQUEST, err.message);
-			break;
 			// default status code is INTERNAL SERVER ERROR
 			default:
-				console.log(err.constructor.name, err.stack);
-				ret = new Response(StatusCodes.INTERNAL_SERVER_ERROR, err.message);
+				let statusCode = ResponseFactory.getStatus(err.constructor.name);
+				if (statusCode)
+					ret = new Response(statusCode, err.message);
+				else{
+					//console.log(err.constructor.name, err.stack);
+					ret = new Response(StatusCodes.INTERNAL_SERVER_ERROR, err.message);
+				}
 			break;
 		}
 		return ret;

@@ -8,7 +8,6 @@ const ModelRouter = express.Router()
 
 // model routes definition
 ModelRouter.get("/model", new MWBuilder()
-                            .addCustom(C.getAll)
-                            .build() );
+                            .build(C.getAll) );
 
 export default ModelRouter;

@@ -208,12 +208,6 @@ class MiddlewareBuilder{
         return new MiddlewareBuilder(this.middlewares.slice());
     }
 
-    // to be deleted
-    addCustom( fun : CallableFunction){
-        this.middlewares.push(fun);
-        return this;
-    }
-
     // add authorization middleware
     addAuth(){
         this.middlewares.push(Middleware.checkAuth);
