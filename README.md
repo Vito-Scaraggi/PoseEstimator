@@ -28,47 +28,12 @@ Il diagramma rappresenta i servizi docker che compongono l'applicazione e le int
 
 L'utente richiama le API esposte dal *backend node.js*. L'interazione B2B (*backend to backend*) avviene tra il server in *node.js* e un server in *flask* che si occupa di inviare richieste di inferenza al modello *pytorch* di HRNet tramite il framework *celery* che si interfaccia con una coda *rabbitMQ*.
 
+### Diagramma dei casi d'uso
+Il diagramma sottostante rappresenta il diagramma dei casi d'uso, cioè delle funzionalità disponibili agli utenti.
+![progpa-Use case (2)](https://github.com/Vito-Scaraggi/PoseEstimator/assets/75072255/c4240c8a-bd45-425a-8dd0-b33dc3897202)
+
 ### Schema database 
-```mermaid
-erDiagram
-    user {
-        integer id PK
-        string name
-        string surname
-        string email UK
-        string password
-        string salt
-        decimal credit
-        boolean admin
-        timestamp createdAt
-        timestamp updatedAt
-    }
-    dataset {
-        integer id PK
-        string name 
-        string[] tags
-        string format
-        integer userID FK
-        timestamp createdAt
-        timestamp updatedAt
-    }
-    image {
-        uuid uuid PK
-        integer file_id UK
-        integer[] bbox
-        integer datasetID FK
-        timestamp createdAt
-        timestamp updatedAt
-    }
-    model {
-        integer id PK
-        string name UK
-        timestamp createdAt
-        timestamp updatedAt
-    }
-    user }o--|| dataset : has
-    dataset }o--|| image : contains
-```
+![progpa-Class-Diagram](https://github.com/Vito-Scaraggi/PoseEstimator/assets/75072255/3028b687-b4c9-430f-a14d-9abbb96572f3)
 
 ### Pattern architetturale
 Il pattern architetturale scelto per il design dell'API è una variante del MVVM (*Model-View-ViewModel*), privato della componente *View* al fine realizzare un *backend* puro. L'MVVM prevede di incapsulare la *business logic* all'interno del *ViewModel*, mentre il *Model* costituisce soltanto il modello dei dati. L'applicazione implementa un *ViewModel* (*alias* Controller) per ogni funzionalità individuata in fase di progettazione e un *Model*, creato con il *framework* [Sequelize](https://sequelize.org/), per ogni tabella presente all'interno del database.
@@ -184,9 +149,9 @@ ResponseFactory ..> Response
 #### Altri pattern
 Nell'implementazione sono stati utilizzati anche il pattern *DAO*, reso disponibile da *Sequelize*, il pattern *wrapper*, utile ad incapsulare il codice *pytorch* necessario per l'inferenza all'interno di una funzione *python* che ne "decora" il comportamento, e il pattern *publish/subscribe*, implementato con *celery* e *rabbitMQ*.
 
-### Diagrammi UML
+### Diagrammi di sequenza
 
-CREATE DATASET
+Sequence diagram per la creazione di un dataset
 ```mermaid
 
 sequenceDiagram
@@ -225,7 +190,7 @@ deactivate M
 end
 ```
 
-INSERT ZIP
+Sequence diagram per l'inserimento di un file zip in un dataset
 ```mermaid
 
 sequenceDiagram
@@ -273,17 +238,16 @@ end
 
 alt 201 Created
     C -->> M: Return Image
-      M -->> User: Return Upload Info
+    M -->> User: Return Upload Info
 else Error 500
    C -->> M: Throw exception
-     M -->> User: Internal Server Error
+   deactivate C
+   M -->> User: Internal Server Error
 end
-deactivate C
-
 deactivate M
 ```
 
-LOGIN
+Sequence diagram per il login di un utente
 ```mermaid
 
 sequenceDiagram
@@ -303,6 +267,7 @@ alt is fine
 P -->> C: Return User
 else Error
 P -->> C: Database error
+deactivate P
 end
 C ->> C: Authenticate User
 alt 200 OK
@@ -310,10 +275,13 @@ C -->> M: Return JWT Token
 M -->> User: Return JWT Token
 else Error 401
 C -->> M: Throw exception
+deactivate C
 M -->> User: Unauthorized
+deactivate M
 end
 ```
-GET JOB STATUS
+
+Sequence diagram per recuperare lo stato di un job
 ```mermaid
 
 sequenceDiagram
@@ -361,7 +329,7 @@ deactivate M
 deactivate U
 ```
 
-START INFERENCE
+Sequence diagram per avviare l'inferenza su un dataset
 ```mermaid
 
 sequenceDiagram
@@ -431,7 +399,7 @@ deactivate U
 deactivate W
 ```
 
-RECHARGE USER CREDIT
+Sequence diagram per ricaricare il credito di un utente
 
 ```mermaid
 
@@ -476,6 +444,33 @@ deactivate U
 
 ## API
 
+###Get all Datasets
+Route:
+```
+GET /dataset/all
+```
+Authorization:
+```
+token
+```
+Response:
+```
+
+```
+
+****
+Route:
+```
+GET /dataset/all
+```
+Authorization:
+```
+
+```
+Response:
+```
+
+```
 ## Quick start
 Per utilizzare l'applicazione segui i seguenti step:
 
