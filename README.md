@@ -651,7 +651,8 @@ Response:
     ],
     "number_invalid_images": 0,
     "invalid_images": []
-}```
+}
+```
 
 
 ## Quick start
