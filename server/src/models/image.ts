@@ -15,7 +15,7 @@ const Image = sequelize.define("image", {
     },
     bbox: {
         type: Sequelize.ARRAY(Sequelize.INTEGER),
-        defaultValue: [200,250,250,300],
+        defaultValue: [220, 65, 200, 350],
         allowNull: false
     },
     datasetID: {

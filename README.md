@@ -324,7 +324,7 @@ end
 
 ## API
 
-###Get all Datasets
+### Get all Datasets
 Route:
 ```
 GET /dataset/all
@@ -334,23 +334,206 @@ Authorization:
 token
 ```
 Response:
+```json
+[
+    {
+        "id": 1,
+        "name": "dataset 1",
+        "tags": [
+            "tag1",
+            "tag2"
+        ],
+        "format": "png",
+        "userID": 1,
+        "createdAt": "2023-07-16T15:15:23.324Z",
+        "updatedAt": "2023-07-16T15:15:23.324Z"
+    },
+    {
+        "id": 2,
+        "name": "dataset 2",
+        "tags": [],
+        "format": "jpg",
+        "userID": 1,
+        "createdAt": "2023-07-16T15:22:31.855Z",
+        "updatedAt": "2023-07-16T15:22:31.855Z"
+    }
+]
 ```
-
-```
-
-****
+### Get dataset by Id
 Route:
 ```
-GET /dataset/all
+POST /dataset/:datasetId
 ```
 Authorization:
 ```
+token
+```
+Response:
+```json
+{
+    "id": 1,
+    "name": "dataset 1",
+    "tags": [
+        "tag1",
+        "tag2"
+    ],
+    "format": "png",
+    "userID": 1,
+    "createdAt": "2023-07-16T15:15:23.324Z",
+    "updatedAt": "2023-07-16T15:15:23.324Z"
+}
+```
+### Create dataset
+Route:
+```
+POST /dataset
+```
+Authorization:
+```
+token
+```
+Body:
+```json
+{
+    "name" : "dataset 1",
+    "tags": ["tag1", "tag2"],
+    "format": "png"
+}
+```
+Response:
+```json
+{
+    "id": 1,
+    "name": "dataset 1",
+    "tags": [
+        "tag1",
+        "tag2"
+    ],
+    "format": "png",
+    "userID": 1,
+    "updatedAt": "2023-07-16T15:15:23.324Z",
+    "createdAt": "2023-07-16T15:15:23.324Z"
+}
+```
+
+### Update dataset
+Route:
+```
+PUT /dataset/:datasetId
+```
+Authorization:
+```
+token
+```
+Body:
+```json
+{   
+    "name": "dataset",
+    "tags": ["tag1"],
+    "format": "jpg"
+}
+```
+Response:
+```json
+{
+    "id": 1,
+    "name": "dataset",
+    "tags": [
+        "tag1"
+    ],
+    "format": "jpg",
+    "userID": 1,
+    "createdAt": "2023-07-16T15:15:23.324Z",
+    "updatedAt": "2023-07-16T15:59:54.124Z"
+}
+```
+
+### Delete dataset by Id
+Route:
+```
+DELETE /dataset/:datasetId
+```
+Authorization:
+```
+token
+```
+Response:
+```json
+{
+    "id": 3,
+    "name": "dataset 3",
+    "tags": [],
+    "format": "png",
+    "userID": 1,
+    "createdAt": "2023-07-16T15:36:41.858Z",
+    "updatedAt": "2023-07-16T15:36:41.858Z"
+}
+```
+
+### Insert Image
+Route:
+```
+POST /dataset/:datasetId/img
+```
+Authorization:
+```
+token
+```
+Body:
+```json
+{
+  "file": "image.png",
+  "info": {
+    "bbox": [220, 65, 200, 350]
+  }
+}
 
 ```
 Response:
+```json
+{
+    "image_uuid": "d02a4bb4-b07e-4b5c-aaa7-55fac501dcbf"
+}
 ```
 
+### Insert Zip
+Route:
 ```
+POST /dataset/:datasetId/zip
+```
+Authorization:
+```
+token
+```
+Body:
+```json
+{
+  "file": "images.zip",
+  "info": [
+    {
+      "img":"1_8bit.png",
+      "bbox":[200,65,180,350]
+    },
+    {
+      "img":"21_8bit.png",
+      "bbox":[190,70,180,350]
+    },
+    ]
+}
+
+```
+Response:
+```json
+{
+    "images_uuid": [
+        "81bc0181-9dc4-4aa6-862a-08d403f6d435",
+        "65e06b89-144a-420b-b405-0a779980e960"
+    ],
+    "number_invalid_images": 0,
+    "invalid_images": []
+}```
+
+
 ## Quick start
 Per utilizzare l'applicazione segui i seguenti step:
 
