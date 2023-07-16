@@ -27,8 +27,14 @@
 Il diagramma rappresenta i servizi docker che compongono l'applicazione e le interazioni tra di essi. I nodi corrispondono a *container docker* orchestrati con l'utilizzo di *docker compose*. 
 
 L'utente richiama le API esposte dal *backend node.js*. L'interazione B2B (*backend to backend*) avviene tra il server in *node.js* e un server in *flask* che si occupa di inviare richieste di inferenza al modello *pytorch* di HRNet tramite il framework *celery*.
+### Diagramma dei casi d'uso
+Il diagramma sottostante rappresenta il diagramma dei casi d'uso, cioè delle funzionalità disponibili agli utenti.
+![progpa-Use case (2)](https://github.com/Vito-Scaraggi/PoseEstimator/assets/75072255/c4240c8a-bd45-425a-8dd0-b33dc3897202)
 
 ### Schema database 
+![progpa-Class-Diagram](https://github.com/Vito-Scaraggi/PoseEstimator/assets/75072255/3028b687-b4c9-430f-a14d-9abbb96572f3)
+
+
 ```mermaid
 erDiagram
     user {
