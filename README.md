@@ -26,7 +26,7 @@
 ```
 Il diagramma rappresenta i servizi docker che compongono l'applicazione e le interazioni tra di essi. I nodi corrispondono a *container docker* orchestrati con l'utilizzo di *docker compose*. 
 
-L'utente richiama le API esposte dal *backend node.js*. L'interazione B2B (*backend to backend*) avviene tra il server in *node.js* e un server in *flask* che si occupa di inviare richieste di inferenza al modello *pytorch* di HRNet tramite il framework *celery*.
+L'utente richiama le API esposte dal *backend node.js*. L'interazione B2B (*backend to backend*) avviene tra il server in *node.js* e un server in *flask* che si occupa di inviare richieste di inferenza al modello *pytorch* di HRNet tramite il framework *celery* che si interfaccia con una coda *rabbitMQ*.
 
 ### Schema database 
 ```mermaid
@@ -182,7 +182,7 @@ class ResponseFactory{
 ResponseFactory ..> Response
 ```
 #### Altri pattern
-Nell'implementazione sono stati utilizzati anche il pattern *DAO*, reso disponibile dal *framework* Sequelize, e il pattern *wrapper* per incapsulare il codice *pytorch* necessario per l'inferenza all'interno di una funzione *python* che ne "decora" il comportamento.
+Nell'implementazione sono stati utilizzati anche il pattern *DAO*, reso disponibile da *Sequelize*, il pattern *wrapper*, utile ad incapsulare il codice *pytorch* necessario per l'inferenza all'interno di una funzione *python* che ne "decora" il comportamento, e il pattern *publish/subscribe*, implementato con *celery* e *rabbitMQ*.
 
 ### Diagrammi UML
 
@@ -312,6 +312,166 @@ else Error 401
 C -->> M: Throw exception
 M -->> User: Unauthorized
 end
+```
+GET JOB STATUS
+```mermaid
+
+sequenceDiagram
+autonumber
+actor U as User<br><br>
+participant M as Middleware
+participant C as Inference Controller
+participant PR as Proxy
+participant F as flask publisher
+participant Q as rabbitMQ
+
+activate U
+activate M
+U ->> M: GET /status/:jobId
+M ->> M: checkAuth
+break auth failed
+M -->> M : throw exception
+M -->> U: 401 Unauthorized
+end
+activate C
+M ->> C: getStatus
+activate PR
+C ->> PR: status
+alt job cached with final state
+PR -->> C : return cached job status
+else job not cached with final state
+activate F
+PR ->> F : GET publisher:PORT/status/jobId
+activate Q
+F ->> Q : retrieve job status from queue
+Q -->> F : return job status or error
+deactivate Q
+F -->> PR : return job status or error
+deactivate F
+PR -->> C : return job status
+deactivate PR
+end
+break exception occurred
+C -->> M : throw or propagate exception
+deactivate C
+M -->> U : error HTTP response
+end
+M -->> U : return job status
+deactivate M
+deactivate U
+```
+
+START INFERENCE
+```mermaid
+
+sequenceDiagram
+autonumber
+actor U as User<br><br>
+participant M as Middleware
+participant C as Inference Controller
+participant P as Postgres
+participant PR as Proxy
+participant F as flask publisher
+participant Q as rabbitMQ
+participant W as HRNet worker
+
+activate U
+activate M
+U ->> M: GET /status/:jobId
+M ->> M: checkAuth
+break auth failed
+M -->> M : throw exception
+M -->> U: 401 Unauthorized
+end
+M ->> M: checkDatasetOwner
+break dataset error
+M -->> M : throw exception
+M -->> U: error HTTP response
+end
+activate C
+M ->> C: startInference
+activate P
+C ->> P : retrieve model name
+P -->> C : return model name
+C ->> P: retrieve dataset images info
+P -->> C: return dataset images info
+deactivate P
+C ->> C : define request params and body
+activate PR
+C ->> PR: inference
+alt dataset is void
+PR -->> C : throw exception
+else dataset contains at least one image
+activate F
+PR ->> F : POST publisher:PORT/model/:model/inference/:dataset
+activate Q
+F ->> Q : send task
+activate W
+Q ->> W : notify task
+W -->> Q : ack
+W ->> W : do inference
+Q -->> F : return job id and state or error
+deactivate Q
+F -->> PR : return job id and state or error
+deactivate F
+PR -->> C : return job id and state
+deactivate PR
+end
+alt task was not sent in ABORTED mode
+  C --> C : bill user
+end
+break exception occurred
+C -->> M : throw or propagate exception
+deactivate C
+M -->> U : error HTTP response
+end
+M -->> U : return job status
+deactivate M
+deactivate U
+deactivate W
+```
+
+RECHARGE USER CREDIT
+
+```mermaid
+
+sequenceDiagram
+autonumber
+actor U as User<br><br>
+participant M as Middleware
+participant C as User Controller
+participant P as Postgres
+
+activate U
+activate M
+U ->> M: POST /user/recharge
+M ->> M: checkAuth
+break auth failed
+M -->> M : throw exception
+M -->> U: 401 Unauthorized
+end
+M ->> M: checkAdmin
+break not admin
+M -->> M : throw exception
+M -->> U: 403 Forbidden
+end
+activate C
+M ->> C: rechargeByEmail
+activate P
+C ->> P: check if user with given email exists
+P -->> C: return user
+C ->> P: update user credits
+P -->> C: query done
+deactivate P
+C -->> M: return success message
+break exception occurred
+C -->> M : throw or propagate exception
+deactivate C
+M -->> U : error HTTP response
+end
+M -->> U : return success message
+deactivate M
+deactivate U
 ```
 
 ## API
