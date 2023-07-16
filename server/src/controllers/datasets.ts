@@ -109,9 +109,9 @@ class DatasetsController{
 
             //If there isn't a dataset with that name, it's created in the database
             if(!sameNameDat){
-                let newUser = JSON.parse(JSON.stringify(value))
-                newUser.userID = req.params.jwtUserId
-                const dataset =  await Dataset.create(newUser)
+                let newDataset = JSON.parse(JSON.stringify(value))
+                newDataset.userID = req.params.jwtUserId
+                const dataset =  await Dataset.create(newDataset)
                 successHandler(res, dataset, StatusCodes.CREATED);
             }else{
                 //if there is already a dataset with that name, throw error
@@ -159,7 +159,7 @@ class DatasetsController{
             })
 
             /*
-                If at least in image has been already uploaded in the dataset
+                If at least an image has been already uploaded in the dataset
                 it's not possible to change dataset's format, otherwise inference
                 would throw an error
             */
@@ -279,8 +279,9 @@ class DatasetsController{
                 let counterWrongImage : number = 0
 
                 // deccompress the zip
-                const files = await decompress(req.file.path, datasetDir)
+                const files = await decompress(req.file.path, datasetDir,{ filter: (file) => !file.path.endsWith('/')})
 
+                console.log("length "+ files.length)
                 // if the user has enough credits
                 if(ownedCredits >= DatasetsController.imgCost * files.length){
                
@@ -289,12 +290,13 @@ class DatasetsController{
 
                         const img_ext = path.parse(file.path).ext
                         const file_path = './' + datasetDir + '/' + file.path;
-
+                        console.log("file.path: " + file.path)
                         // check if the ext of the file is the same as the one of the dataset
                         if(img_ext.replace('.','') === req.params.datasetFormat){
                             
                             // search the bbox for the image (if it's specified)
-                            const bbox_img = value?.find((elem:any) => elem.img === file.path)?.bbox
+                            const bbox_img = value?.find((elem:any) => elem.img ===  path.parse(file.path).base)?.bbox
+                            console.log("bbox: " + bbox_img)
                             let img;
                             
                             //if there is a bbox and its correct
@@ -334,9 +336,19 @@ class DatasetsController{
                             counterWrongImage += 1;
 
                             // removing wrong extension image
-                            await fs.unlink(file_path);
+                            await fs.remove(file_path);
                         }
                     };//end for
+
+                    //remove empty folders
+                    const dirsInDataset = (await fs.readdir(datasetDir ,{ withFileTypes : true }))
+                                            .filter(file => file.isDirectory())
+                                            .map(file => file.name)
+                    
+                    for (const dir of dirsInDataset){
+                        await fs.remove(datasetDir + '/' + dir);
+                    }
+
 
                      // decrement user's credits (counting only the right extension images)
                     const user = await User.findOne({
@@ -355,7 +367,7 @@ class DatasetsController{
                         successHandler(res, jsonMessage , StatusCodes.CREATED);
                     })  
                     //removing zip file
-                    await fs.unlink(req.file.path);
+                    await fs.remove(req.file.path);
         
                 }else{
                     throw new NotEnoughCredits();

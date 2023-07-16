@@ -16,8 +16,7 @@ const Dataset = sequelize.define("dataset", {
     },
     tags: {
         type: Sequelize.ARRAY(Sequelize.TEXT),
-        allowNull: false,
-        defaultValue: 0
+        defaultValue: []
     },
     format: {
         type: Sequelize.TEXT,
