@@ -964,7 +964,7 @@ Per utilizzare le rotte che sono già state definite su Postman, segui i seguent
 2. Scarica il file "PoseEstimator.postman_collection.json" che si trova nel repository.
 3. Apri Postman e fai clic su "File -> Import..." dall'angolo in alto a sinistra e seleziona il file che hai scaricato poco fa.
 4. In questo modo dovresti vedere tutte le rotte su Postman.
-5. L'ultimo passaggio è quello di impostare una variabile globale che dovrà chimarsi "authToken".
+5. L'ultimo passaggio è quello di impostare una variabile globale che dovrà chiamarsi "authToken".
 6. Dovrai, quindi, popolare la variabile con il jwt Token che puoi ottenere chiamando la rotta "Login & Get Token".
 7. A questo punto potrai utilizzare tutte le rotte, comprese quelle che richiedono l'autenticazione.
 
