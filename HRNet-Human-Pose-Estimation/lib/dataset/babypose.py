@@ -56,6 +56,7 @@ class BabyPoseDataset(JointsDataset):
         self.use_gt_bbox = cfg.TEST.USE_GT_BBOX
         self.image_width = cfg.MODEL.IMAGE_SIZE[0]
         self.image_height = cfg.MODEL.IMAGE_SIZE[1]
+        self.image_format = cfg.DATASET.DATA_FORMAT
         self.aspect_ratio = self.image_width * 1.0 / self.image_height
         self.pixel_std = 200
 
@@ -232,7 +233,7 @@ class BabyPoseDataset(JointsDataset):
     def image_path_from_index(self, index):
         prefix = self.image_set
         data_name = prefix + '.zip@' if self.data_format == 'zip' else prefix
-        file_name = str(index).zfill(12) + ".png"
+        file_name = str(index).zfill(12) + "." + str(self.image_format)
         image_path = os.path.join(
             self.root, 'images', data_name, file_name)
 
