@@ -45,6 +45,7 @@ Il diagramma sottostante rappresenta il diagramma dei casi d'uso, cioè delle fu
 ![progpa-Use case (2)](https://github.com/Vito-Scaraggi/PoseEstimator/assets/75072255/c4240c8a-bd45-425a-8dd0-b33dc3897202)
 
 ### Schema database 
+Il diagramma sottostane è il diagramma delle classi del databse utilizzato.
 ![progpa-Class-Diagram](https://github.com/Vito-Scaraggi/PoseEstimator/assets/75072255/3028b687-b4c9-430f-a14d-9abbb96572f3)
 
 ### Pattern architetturale
