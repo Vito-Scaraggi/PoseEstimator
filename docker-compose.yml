@@ -4,12 +4,12 @@ services:
     build : "./HRNet-Human-Pose-Estimation"
     image: hrnet:1.0
     container_name: hrnet
-    volumes:
-      - "./HRNet-Human-Pose-Estimation:/HRNet-Human-Pose-Estimation"
     depends_on:
       - rabbitmq
     environment:
       - RMQ_PORT=5672
+    volumes :
+      - "./HRNet-Human-Pose-Estimation/data:/HRNet-Human-Pose-Estimation/data"
 
   rabbitmq:
     image: rabbitmq:3.9.29
@@ -47,8 +47,6 @@ services:
     environment:
       - RMQ_PORT=5672
       - API_PORT=3001
-    volumes:
-      - "./publisher:/publisher"
       
   postgres:
     container_name: postgres

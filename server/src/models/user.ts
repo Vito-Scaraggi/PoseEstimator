@@ -33,7 +33,7 @@ const User = sequelize.define("user", {
     credit: {
         type: Sequelize.DECIMAL(11,2),
         allowNull: false,
-        defaultValue: process.env.DEFAULT_CREDITS || 500
+        defaultValue: process.env.DEFAULT_CREDITS || 100
     },
     admin: {
         type: Sequelize.BOOLEAN,

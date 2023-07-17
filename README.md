@@ -443,15 +443,11 @@ deactivate U
 ```
 
 ## API
-
-### Get all Datasets
+Le rotte con il simbolo :key: sono autenticate e necessitano di un header *authorization* contenente il *jwt token*.
+### Get all Datasets :key:
 Route:
 ```
 GET /dataset/all
-```
-Authorization:
-```
-token
 ```
 Response:
 ```json
@@ -479,14 +475,10 @@ Response:
     }
 ]
 ```
-### Get dataset by Id
+### Get dataset by Id :key:
 Route:
 ```
 POST /dataset/:datasetId
-```
-Authorization:
-```
-token
 ```
 Response:
 ```json
@@ -503,14 +495,10 @@ Response:
     "updatedAt": "2023-07-16T15:15:23.324Z"
 }
 ```
-### Create dataset
+### Create dataset :key:
 Route:
 ```
 POST /dataset
-```
-Authorization:
-```
-token
 ```
 Body:
 ```json
@@ -536,14 +524,10 @@ Response:
 }
 ```
 
-### Update dataset
+### Update dataset :key:
 Route:
 ```
 PUT /dataset/:datasetId
-```
-Authorization:
-```
-token
 ```
 Body:
 ```json
@@ -568,14 +552,10 @@ Response:
 }
 ```
 
-### Delete dataset by Id
+### Delete dataset by Id :key:
 Route:
 ```
 DELETE /dataset/:datasetId
-```
-Authorization:
-```
-token
 ```
 Response:
 ```json
@@ -590,14 +570,10 @@ Response:
 }
 ```
 
-### Insert Image
+### Insert Image :key:
 Route:
 ```
 POST /dataset/:datasetId/img
-```
-Authorization:
-```
-token
 ```
 Body:
 ```json
@@ -616,14 +592,10 @@ Response:
 }
 ```
 
-### Insert Zip
+### Insert Zip :key:
 Route:
 ```
 POST /dataset/:datasetId/zip
-```
-Authorization:
-```
-token
 ```
 Body:
 ```json
@@ -654,6 +626,279 @@ Response:
 }
 ```
 
+### Get All Users
+Route:
+```
+GET /user/all
+```
+Response:
+```json
+[
+    {
+        "id": 2,
+        "name": "Luca",
+        "surname": "Guidi",
+        "email": "luca@luca.it",
+        "credit": "100.00",
+        "admin": false,
+        "createdAt": null,
+        "updatedAt": null
+    },
+    {
+        "id": 3,
+        "name": "Admin",
+        "surname": "Admin",
+        "email": "admin@admin.it",
+        "credit": "200.00",
+        "admin": true,
+        "createdAt": null,
+        "updatedAt": null
+    },
+    {
+        "id": 1,
+        "name": "Vito",
+        "surname": "Scaraggi",
+        "email": "vito@vito.it",
+        "credit": "64.60",
+        "admin": false,
+        "createdAt": null,
+        "updatedAt": "2023-07-17T08:47:23.153Z"
+    }
+]
+```
+### Login & Get Token
+Route:
+```
+POST /login
+```
+Body:
+```json
+{
+    "email" : "vito@vito.it",
+    "password" : "vito"
+}
+```
+Response:
+```json
+{
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNjg5NTgzODQzLCJleHAiOjE2ODk2NzAyNDN9.guB247mGARDnKvQLgzWDXay-91P_YfOHQJkNaW1DBYs"
+}
+```
+### Get User :key:
+Route:
+```
+GET /user/:userId?
+```
+Response:
+```json
+{
+    "id": 1,
+    "name": "Vito",
+    "surname": "Scaraggi",
+    "email": "vito@vito.it",
+    "password": "e220164f41888d58f385856cb6a245ff427544b65d00eb67360ad33f8b445506",
+    "credit": "164.60",
+    "admin": false,
+    "createdAt": null,
+    "updatedAt": "2023-07-17T09:00:51.662Z"
+}
+```
+### Get User credit :key:
+Route:
+```
+GET /user/credit/userId?
+```
+Response:
+```json
+{
+    "credit": "164.60"
+}
+```
+### Create User
+Route:
+```
+POST /user
+```
+Body:
+```json
+{
+    "name" : "Mario",
+    "surname" : "Rossi",
+    "email" : "mario@rossi.it",
+    "password" : "mariorossi"
+}
+```
+Response:
+```json
+{
+    "credit": "100.00",
+    "admin": false,
+    "id": 4,
+    "name": "Mario",
+    "surname": "Rossi",
+    "email": "mario@rossi.it",
+    "password": "5032db4f275ea2034d4a0c3c09ca307ca83a379920c63b07c607951d378d7b8b",
+    "updatedAt": "2023-07-17T08:52:02.432Z",
+    "createdAt": "2023-07-17T08:52:02.432Z"
+}
+```
+### Update User :key:
+Route:
+```
+PUT /user/:userId?
+```
+Body:
+```json
+{
+    "name" : "Marko",
+    "surname" : "Red",
+    "email" : "marko@red.it",
+    "password" : "markored"
+}
+```
+Response:
+```json
+{
+    "id": 4,
+    "name": "Marko",
+    "surname": "Red",
+    "email": "marko@red.it",
+    "password": "ca3feef024d8c2ab3113ad5a2795e3194d8d4673ddf289dde6b4f23287f0f57f",
+    "credit": "100.00",
+    "admin": false,
+    "createdAt": "2023-07-17T08:52:02.432Z",
+    "updatedAt": "2023-07-17T08:58:03.030Z"
+}
+```
+### Delete User :key:
+Route:
+```
+DELETE /user/:userId?
+```
+Response:
+```json
+{
+    "id": 4,
+    "name": "Marko",
+    "surname": "Red",
+    "email": "marko@red.it",
+    "password": "ca3feef024d8c2ab3113ad5a2795e3194d8d4673ddf289dde6b4f23287f0f57f",
+    "credit": "100.00",
+    "admin": false,
+    "createdAt": "2023-07-17T08:52:02.432Z",
+    "updatedAt": "2023-07-17T08:58:03.030Z"
+}
+```
+### Recharge User by Email :key: (admin only)
+Route:
+```
+POST /user/recharge
+```
+Body:
+```json
+{
+    "email" : "vito@vito.it",
+    "credit" : 100
+}
+```
+Response:
+```json
+{
+    "message": "recharge of 100 credits for vito@vito.it executed successfully"
+}
+```
+### Start Inference :key:
+Route:
+```
+GET /model/:modelId/inference/:datasetId
+```
+Response:
+```json
+{
+    "id": "d465bd02-ebc5-4dd2-b38d-2e4d8cdd70ea",
+    "status": "PENDING"
+}
+```
+### Get Job Status :key:
+Route:
+```
+GET /status/:jobId
+```
+Response:
+```json
+{
+    "id": "d465bd02-ebc5-4dd2-b38d-2e4d8cdd70ea",
+    "result": [
+        {
+            "image_id": 68,
+            "keypoints": [
+                {
+                    "type": "right hand",
+                    "x": 424,
+                    "y": 368
+                },
+                {
+                    "type": "right elbow",
+                    "x": 205,
+                    "y": 193
+                },
+                {
+                    "type": "right shoulder",
+                    "x": 215,
+                    "y": 139
+                },
+                {
+                    "type": "left shoulder",
+                    "x": 383,
+                    "y": 269
+                },
+                {
+                    "type": "left elbow",
+                    "x": 434,
+                    "y": 395
+                },
+                {
+                    "type": "left hand",
+                    "x": 420,
+                    "y": 375
+                },
+                {
+                    "type": "right foot",
+                    "x": 318,
+                    "y": 125
+                },
+                {
+                    "type": "right knee",
+                    "x": 376,
+                    "y": 395
+                },
+                {
+                    "type": "right hip",
+                    "x": 270,
+                    "y": 142
+                },
+                {
+                    "type": "left hip",
+                    "x": 212,
+                    "y": 248
+                },
+                {
+                    "type": "left knee",
+                    "x": 379,
+                    "y": 398
+                },
+                {
+                    "type": "left foot",
+                    "x": 219,
+                    "y": 180
+                }
+            ],
+            "score": 35.34
+        }
+    ],
+    "status": "COMPLETED"
+}
+```
 
 ## Quick start
 Per utilizzare l'applicazione segui i seguenti step:
