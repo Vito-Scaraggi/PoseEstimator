@@ -626,6 +626,23 @@ Response:
 }
 ```
 
+### Get Model
+Route:
+```
+GET /model
+```
+Response:
+```json
+[
+    {
+        "id": 1,
+        "name": "multi_out_pose_hrnet",
+        "createdAt": null,
+        "updatedAt": null
+    }
+]
+```
+
 ### Get All Users
 Route:
 ```
