@@ -2,6 +2,18 @@
 ## Obiettivo del progetto
 **PoseEstimator** è una API in [Express.js](https://expressjs.com/) che permette di fare inferenza su immagini utilizzando la rete neurale [HRNet](https://github.com/Vito-Scaraggi/HRNet-Human-Pose-Estimation) per il *task* di stima della posa. Il modello è stato addestrato per la *Keypoint Detection* su immagini di profondità di bambini nati prematuri ([BabyposeDataset](https://link.springer.com/article/10.1007/s11517-022-02696-9)).
 
+## Indice
+- [Progettazione](#progettazione)
+  - [Architettura dei servizi docker](#architettura-dei-servizi-docker)
+  - [Diagramma dei casi d'uso](#diagramma-dei-casi-duso)
+  - [Schema database](#schema-database)
+  - [Pattern architetturale](#pattern-architetturale)
+  - [Design Pattern](#design-pattern)
+  - [Diagrammi di sequenza](#diagrammi-di-sequenza)
+- [API](#api)
+- [Quickstart](#quick-start)
+- [Testing](#testing)
+
 ## Progettazione
 ### Architettura dei servizi docker 
 
