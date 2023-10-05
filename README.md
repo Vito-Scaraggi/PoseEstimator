@@ -935,7 +935,7 @@ Per utilizzare l'applicazione segui i seguenti step:
 
 1. Installa *docker* e *docker compose*
 2. Clona il repository
-3. Scarica da [Model download](https://mega.nz/file/RmhF1KrK#_UfUSyS0S9oWF6dQnQUetbREhEad5JGIR3e3CVF5lnI) il modello con estensione .pth e posizionalo nella cartella di progetto nel modo seguente:
+3. Scarica da [Model download](https://mega.nz/file/szpCWYTb#_UfUSyS0S9oWF6dQnQUetbREhEad5JGIR3e3CVF5lnI) il modello con estensione .pth e posizionalo nella cartella di progetto nel modo seguente:
 
 ```
 .
@@ -956,7 +956,7 @@ Per utilizzare l'applicazione segui i seguenti step:
   docker compose up
 ```
 
-> **Tip**:bulb:: Scarica da [Dataset download](https://mega.nz/file/Ii4AhTIA#Vl6hkcguHW2ZAvgotDtCdrZYt30ZROkjn6LciSdpDY8) alcune immagini di test con annotazione appartenenti al [BabyposeDataset](https://link.springer.com/article/10.1007/s11517-022-02696-9). Puoi utilizzarle per effettuare l'inferenza inserendo opzionalmente il bounding box annotato.
+> **Tip**:bulb:: Scarica da [Dataset download](https://mega.nz/file/EqAiVTRT#Vl6hkcguHW2ZAvgotDtCdrZYt30ZROkjn6LciSdpDY8) alcune immagini di test con annotazione appartenenti al [BabyposeDataset](https://link.springer.com/article/10.1007/s11517-022-02696-9). Puoi utilizzarle per effettuare l'inferenza inserendo opzionalmente il bounding box annotato.
 
 ## Testing
 Per utilizzare le rotte che sono già state definite su Postman, segui i seguenti passaggi:
