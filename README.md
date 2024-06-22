@@ -21,7 +21,7 @@
   flowchart LR;
       user[user] -->|API request| server
       
-      subgraph <b>docker services</b>
+      subgraph docker services
       
       server[backend <div> <b> node.js];
       db[(database <div> <b> postgres)];
@@ -46,6 +46,7 @@ Il diagramma sottostante rappresenta il diagramma dei casi d'uso, cioè delle fu
 
 ### Schema database 
 Il diagramma sottostane è il diagramma delle classi del databse utilizzato.
+
 ![progpa-Class-Diagram](https://github.com/Vito-Scaraggi/PoseEstimator/assets/75072255/3028b687-b4c9-430f-a14d-9abbb96572f3)
 
 ### Pattern architetturale
